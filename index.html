@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🌸 미소의 일본어 단어장</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Hiragino Sans', 'Yu Gothic', 'Apple SD Gothic Neo', sans-serif;
+            background: linear-gradient(135deg, #fff0f5 0%, #fce4ec 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .app {
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: white;
+            box-shadow: 0 0 40px rgba(255, 105, 135, 0.15);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b9d, #ff8fab);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+        }
+        .header-text h1 { font-size: 20px; font-weight: 700; }
+        .header-text p  { font-size: 11px; opacity: 0.85; margin-top: 2px; }
+        .header-ganadi  { flex-shrink: 0; }
+
+        .nav {
+            display: flex;
+            background: white;
+            border-bottom: 1px solid #fce4ec;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-btn {
+            flex: 1;
+            padding: 11px 4px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 10px;
+            color: #bbb;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            transition: color 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-btn span:first-child { font-size: 20px; }
+        .nav-btn.active { color: #ff6b9d; border-bottom-color: #ff6b9d; }
+
+        .page { display: none; padding: 20px; min-height: calc(100vh - 120px); }
+        .page.active { display: block; }
+
+        /* Word list */
+        .filter-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+        .filter-btn {
+            padding: 7px 16px;
+            border-radius: 20px;
+            border: 1.5px solid #fce4ec;
+            background: white;
+            cursor: pointer;
+            font-size: 13px;
+            color: #aaa;
+            transition: all 0.2s;
+        }
+        .filter-btn.active { background: #ff6b9d; border-color: #ff6b9d; color: white; }
+
+        .word-count { font-size: 13px; color: #bbb; margin-bottom: 14px; }
+
+        .word-card {
+            background: white;
+            border: 1.5px solid #fce4ec;
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: opacity 0.2s;
+        }
+        .word-card.memorized { opacity: 0.45; background: #fafafa; }
+        .word-info { flex: 1; min-width: 0; }
+        .word-furigana { font-size: 11px; color: #ff6b9d; margin-bottom: 2px; }
+        .word-japanese { font-size: 22px; font-weight: 700; color: #222; }
+        .word-korean { font-size: 14px; color: #888; margin-top: 2px; }
+        .word-actions { display: flex; gap: 8px; flex-shrink: 0; }
+        .btn-icon {
+            width: 36px; height: 36px; border-radius: 50%;
+            border: none; cursor: pointer; font-size: 15px;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .btn-check { background: #e8f5e9; color: #4caf50; }
+        .btn-check.checked { background: #4caf50; color: white; }
+        .btn-delete { background: #fce4ec; color: #f06292; }
+
+        /* Add form */
+        .section-title { font-size: 16px; font-weight: 700; color: #333; margin-bottom: 16px; }
+        .form-group { margin-bottom: 14px; }
+        .form-label { display: block; font-size: 13px; font-weight: 600; color: #ff6b9d; margin-bottom: 7px; }
+        .form-input {
+            width: 100%; padding: 14px; border: 1.5px solid #fce4ec;
+            border-radius: 12px; font-size: 16px; outline: none;
+            transition: border-color 0.2s; font-family: inherit;
+        }
+        .form-input:focus { border-color: #ff6b9d; }
+        .btn-primary {
+            width: 100%; padding: 15px; background: linear-gradient(135deg, #ff6b9d, #ff8fab);
+            color: white; border: none; border-radius: 12px;
+            font-size: 16px; font-weight: 700; cursor: pointer;
+            transition: opacity 0.2s; font-family: inherit;
+        }
+        .btn-primary:active { opacity: 0.85; }
+        .divider { border: none; border-top: 1.5px solid #fce4ec; margin: 24px 0; }
+
+        /* Flashcard */
+        .progress-bar { background: #fce4ec; border-radius: 10px; height: 7px; margin-bottom: 18px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #ff6b9d, #ff8fab); border-radius: 10px; transition: width 0.4s; }
+        .counter-text { text-align: center; color: #bbb; font-size: 13px; margin-bottom: 10px; }
+
+        .flashcard {
+            background: linear-gradient(135deg, #fff0f5, #fce4ec);
+            border: 2px solid #ffb3c6;
+            border-radius: 22px;
+            padding: 44px 24px;
+            text-align: center;
+            min-height: 210px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            cursor: pointer;
+            margin-bottom: 18px;
+            user-select: none;
+        }
+        .card-furigana { font-size: 14px; color: #ff6b9d; min-height: 20px; margin-bottom: 6px; }
+        .card-japanese { font-size: 40px; font-weight: 700; color: #222; margin-bottom: 12px; }
+        .card-korean { font-size: 20px; color: #666; min-height: 28px; }
+
+        .card-buttons { display: flex; gap: 12px; margin-bottom: 12px; }
+        .btn-secondary {
+            flex: 1; padding: 14px; border-radius: 12px; border: none;
+            cursor: pointer; font-size: 15px; font-weight: 600;
+            font-family: inherit; transition: opacity 0.2s;
+        }
+        .btn-secondary:active { opacity: 0.8; }
+
+        /* Quiz */
+        .quiz-question {
+            background: linear-gradient(135deg, #fff0f5, #fce4ec);
+            border-radius: 20px; padding: 30px 20px;
+            text-align: center; margin-bottom: 18px;
+        }
+        .quiz-word { font-size: 36px; font-weight: 700; color: #222; margin-bottom: 6px; }
+        .quiz-furigana { font-size: 13px; color: #ff6b9d; }
+        .quiz-sub { font-size: 13px; color: #bbb; margin-top: 10px; }
+
+        .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+        .quiz-option {
+            padding: 18px 10px; background: white;
+            border: 2px solid #fce4ec; border-radius: 14px;
+            cursor: pointer; font-size: 15px; text-align: center;
+            transition: all 0.2s; font-family: inherit; color: #333;
+        }
+        .quiz-option.correct { background: #e8f5e9; border-color: #4caf50; color: #2e7d32; }
+        .quiz-option.wrong   { background: #fce4ec; border-color: #f06292; color: #c62828; }
+        .quiz-option:disabled { cursor: default; }
+        .score-display { text-align: center; font-size: 16px; color: #ff6b9d; font-weight: 700; margin-bottom: 14px; }
+
+        /* Quiz result */
+        .quiz-result { text-align: center; padding: 24px 10px; }
+        .result-score { font-size: 56px; font-weight: 700; color: #ff6b9d; margin-bottom: 4px; }
+        .result-fraction { font-size: 20px; color: #ff6b9d; font-weight: 600; margin-bottom: 10px; }
+        .result-message { font-size: 17px; color: #666; margin-bottom: 26px; line-height: 1.6; }
+
+        /* Stats */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .stat-card { background: linear-gradient(135deg, #fff0f5, #fce4ec); border-radius: 16px; padding: 20px; text-align: center; }
+        .stat-number { font-size: 34px; font-weight: 700; color: #ff6b9d; }
+        .stat-label  { font-size: 12px; color: #aaa; margin-top: 4px; }
+
+        /* Empty state */
+        .empty-state { text-align: center; padding: 60px 20px; color: #ccc; }
+        .empty-state .emoji { font-size: 64px; margin-bottom: 14px; }
+        .empty-state p { font-size: 16px; line-height: 1.6; }
+
+        /* Confetti */
+        .confetti-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
+        .confetti { position: absolute; animation: confetti-fall linear forwards; }
+        @keyframes confetti-fall { to { transform: translateY(105vh) rotate(720deg); opacity: 0; } }
+
+        /* ── 가나디 팝업 ─────────────────────────── */
+        .ganadi-popup {
+            position: fixed;
+            bottom: 80px;
+            right: 16px;
+            z-index: 500;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+            transform: translateY(200px);
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s;
+            pointer-events: none;
+        }
+        .ganadi-popup.show {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .ganadi-bubble {
+            background: white;
+            border: 2px solid #ffb3c6;
+            border-radius: 16px 16px 4px 16px;
+            padding: 10px 14px;
+            font-size: 13px;
+            color: #555;
+            max-width: 180px;
+            line-height: 1.5;
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(255,107,157,0.15);
+        }
+        .ganadi-tap-hint {
+            font-size: 10px;
+            color: #ddd;
+            text-align: center;
+        }
+
+        /* 가나디 SVG 스타일 */
+        .ganadi-svg-wrap { cursor: pointer; }
+        .ganadi-svg-wrap:active { transform: scale(0.92); }
+        .ganadi-bounce { animation: ganadiBounce 0.6s ease infinite alternate; }
+        @keyframes ganadiBounce {
+            from { transform: translateY(0); }
+            to   { transform: translateY(-6px); }
+        }
+
+        /* 퀴즈 결과 안 가나디 */
+        .result-ganadi { display: flex; flex-direction: column; align-items: center; margin-bottom: 16px; }
+
+        .mt-12 { margin-top: 12px; }
+    </style>
+</head>
+<body>
+<div class="app">
+    <div class="header">
+        <div class="header-ganadi" id="header-ganadi-wrap"></div>
+        <div class="header-text">
+            <h1>미소의 일본어 단어장 🌸</h1>
+            <p>김미소는 꿀돼지라네</p>
+        </div>
+    </div>
+
+    <nav class="nav">
+        <button class="nav-btn active" data-page="wordlist" onclick="showPage('wordlist',this)"><span>📖</span><span>단어장</span></button>
+        <button class="nav-btn" data-page="add"      onclick="showPage('add',this)">     <span>➕</span><span>추가</span></button>
+        <button class="nav-btn" data-page="study"    onclick="showPage('study',this)">   <span>📚</span><span>학습</span></button>
+        <button class="nav-btn" data-page="quiz"     onclick="showPage('quiz',this)">    <span>🎯</span><span>퀴즈</span></button>
+        <button class="nav-btn" data-page="stats"    onclick="showPage('stats',this)">   <span>📊</span><span>통계</span></button>
+    </nav>
+
+    <!-- 단어장 -->
+    <div id="page-wordlist" class="page active">
+        <div class="filter-row">
+            <button class="filter-btn active" onclick="setFilter('all',this)">전체</button>
+            <button class="filter-btn" onclick="setFilter('active',this)">학습중</button>
+            <button class="filter-btn" onclick="setFilter('memorized',this)">암기완료</button>
+        </div>
+        <div id="word-count" class="word-count"></div>
+        <div id="word-list"></div>
+    </div>
+
+    <!-- 단어 추가 -->
+    <div id="page-add" class="page">
+        <div class="section-title">새 단어 추가 ✏️</div>
+        <div class="form-group">
+            <label class="form-label">일본어 단어 *</label>
+            <input class="form-input" id="input-japanese" type="text" placeholder="예) 猫  /  ねこ" autocomplete="off" autocorrect="off">
+        </div>
+        <div class="form-group">
+            <label class="form-label">후리가나 (읽는 법)</label>
+            <input class="form-input" id="input-furigana" type="text" placeholder="예) ねこ" autocomplete="off" autocorrect="off">
+        </div>
+        <div class="form-group">
+            <label class="form-label">한국어 뜻 *</label>
+            <input class="form-input" id="input-korean" type="text" placeholder="예) 고양이" autocomplete="off">
+        </div>
+        <button class="btn-primary" id="btn-add-word" onclick="addWord()">✨ 단어 추가하기</button>
+        <hr class="divider">
+        <div class="section-title">여러 단어 한번에 추가 📋</div>
+        <div class="form-group">
+            <label class="form-label">일본어, 후리가나, 뜻  (한 줄에 하나씩)</label>
+            <textarea class="form-input" id="input-bulk" rows="7"
+                placeholder="猫,ねこ,고양이&#10;犬,いぬ,개&#10;花,はな,꽃&#10;&#10;후리가나 없으면:  단어,뜻" style="resize:vertical;font-size:14px;line-height:1.7;"></textarea>
+        </div>
+        <button class="btn-primary" onclick="bulkAddWords()" style="background:linear-gradient(135deg,#a78bfa,#c084fc);">📋 일괄 추가하기</button>
+    </div>
+
+    <!-- 학습 (플래시카드) -->
+    <div id="page-study" class="page">
+        <div id="study-content"></div>
+    </div>
+
+    <!-- 퀴즈 -->
+    <div id="page-quiz" class="page">
+        <div id="quiz-content"></div>
+    </div>
+
+    <!-- 통계 -->
+    <div id="page-stats" class="page">
+        <div class="section-title">나의 학습 현황 🌸</div>
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-number" id="stat-total">0</div><div class="stat-label">전체 단어</div></div>
+            <div class="stat-card"><div class="stat-number" id="stat-memorized">0</div><div class="stat-label">암기 완료</div></div>
+            <div class="stat-card"><div class="stat-number" id="stat-quizzes">0</div><div class="stat-label">퀴즈 횟수</div></div>
+            <div class="stat-card"><div class="stat-number" id="stat-best">0%</div><div class="stat-label">최고 점수</div></div>
+        </div>
+        <div style="background:linear-gradient(135deg,#fff0f5,#fce4ec);border-radius:16px;padding:20px;margin-bottom:20px;">
+            <div style="font-size:14px;color:#888;margin-bottom:10px;">암기 진행률</div>
+            <div class="progress-bar" style="height:12px;margin-bottom:8px;">
+                <div class="progress-fill" id="stat-progress" style="width:0%"></div>
+            </div>
+            <div style="font-size:13px;color:#ff6b9d;font-weight:700;" id="stat-progress-text">0 / 0</div>
+        </div>
+        <button class="btn-primary" onclick="resetStats()" style="background:linear-gradient(135deg,#bbb,#ccc);">통계 초기화</button>
+    </div>
+</div>
+
+<!-- 가나디 팝업 (전역) -->
+<div class="ganadi-popup" id="ganadi-popup">
+    <div class="ganadi-bubble" id="ganadi-bubble"></div>
+    <div class="ganadi-svg-wrap ganadi-bounce" onclick="hideGanadiPopup()" id="ganadi-popup-svg"></div>
+    <div class="ganadi-tap-hint">탭해서 닫기</div>
+</div>
+
+<div class="confetti-container" id="confetti-container"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  가나디 이미지
+// ══════════════════════════════════════════════════════
+const GANADI_IMG = {
+    normal:   'ganadi_main.png',       // 기본 얼굴 (헤더, 일반)
+    happy:    'ganadi_love.png',       // 손하트 (80%+ 점수)
+    excited:  'ganadi_cheer.png',      // 팔 번쩍 (100%, 연속정답)
+    sad:      'ganadi_sad.png',        // 엎드림 (40~59%)
+    crying:   'ganadi_sad.png',        // 엎드림 (39% 이하)
+    studying: 'ganadi_main.png',       // 집중 얼굴 (공부중)
+    cheer:    'ganadi_main_cheer.png', // 응원 (격려 메시지)
+    sleepy:   'ganadi_fat.png',        // 뚱뚱 앉기 (졸림/여유)
+    skep:     'ganadi_skep.png',       // 의심 표정 (랜덤 팝업)
+};
+
+function ganadiSVG(mood = 'normal', size = 80) {
+    const src = GANADI_IMG[mood] || GANADI_IMG.normal;
+    return `<img src="${src}" width="${size}" style="display:block;object-fit:contain;" alt="가나디">`;
+}
+
+// ══════════════════════════════════════════════════════
+//  가나디 팝업
+// ══════════════════════════════════════════════════════
+let popupTimer = null;
+
+const STUDY_MESSAGES = [
+    ['cheer',   '화이팅!! 잘 하고 있어!! 🔥'],
+    ['skep',    '외우고 있는 거 맞지..? 🤔'],
+    ['excited', '이 정도면 일본 가도 되겠는데!!'],
+    ['sleepy',  '졸려? 졸려도 참아!! 💪'],
+    ['cheer',   '오늘도 열심히!! 최고야~'],
+    ['skep',    '조금만 더!! 할 수 있어!!'],
+    ['happy',   '멋있다... 역시 미소야!! 🌸'],
+    ['sleepy',  '잠깐 쉬어도 돼... 근데 너무 오래는 안 돼 😂'],
+];
+let studyMsgIndex = 0;
+
+function showGanadiPopup(mood, message) {
+    clearTimeout(popupTimer);
+    const popup = document.getElementById('ganadi-popup');
+    const bubble = document.getElementById('ganadi-bubble');
+    const svgWrap = document.getElementById('ganadi-popup-svg');
+    bubble.textContent = message;
+    svgWrap.innerHTML = ganadiSVG(mood, 80);
+    popup.classList.add('show');
+    popupTimer = setTimeout(hideGanadiPopup, 4500);
+}
+
+function hideGanadiPopup() {
+    clearTimeout(popupTimer);
+    document.getElementById('ganadi-popup').classList.remove('show');
+}
+
+// ══════════════════════════════════════════════════════
+//  Default words (구글 시트에서 가져온 기본 단어들)
+// ══════════════════════════════════════════════════════
+function parseJapanese(text) {
+    // "漢字（ふりがな）" 형태에서 일본어와 후리가나 분리
+    const m = text.match(/^([^（(]+)[（(]([^）)]+)[）)]/);
+    if (m) return { japanese: m[1].trim(), furigana: m[2].trim() };
+    return { japanese: text.trim(), furigana: '' };
+}
+
+const RAW_DEFAULT = [
+["확실히","手堅く（てがたく）"],
+["편의성, 정확성","操作性, 精度"],
+["적당히","ほどよい（程よい）"],
+["파격적으로 상식을 깨다","破天荒（はてんこう）"],
+["재미없다 / 맛없다","味気ない（あじけない）"],
+["점검중","点検中（てんけんちゅう）"],
+["미세조정","微調整（びちょうせい）"],
+["억측","憶測（おくそく）"],
+["한방을 노리다","一発を狙う（いっぱつをねらう）"],
+["보충","補充（ほじゅう）"],
+["외상 / 외상매출","掛け売り（かけうり）"],
+["수많은 / 허다한","幾多（いくた）"],
+["내수시장","内需市場（ないじゅしじょう）"],
+["결제유예","猶予（ゆうよ）"],
+["경미한 변경 신고","軽微変更届（けいびへんこうとどけ）"],
+["~에 비추어 보다","鑑みる（かんがみる）"],
+["남겨두고 감 / 뒤처짐","置いてきぼり（おいてきぼり）"],
+["장관 / 웅장한 광경","壮観（そうかん）"],
+["혼자 이득 / 몰래 앞서감","抜け駆け（ぬけがけ）"],
+["쫓아내다","追い出す（おいだす）"],
+["간식 / 음식 갖다 주기","差し入れ（さしいれ）"],
+["장식","装飾（そうしょく）"],
+["우리끼리","水入らず（みずいらず）"],
+["분할결제","分割払い（ぶんかつばらい）"],
+["일시불","一括（いっかつ）"],
+["위엄","威厳（いげん）"],
+["마늘이 강하다","ニンニク効いてる"],
+["상쾌하다 / 깔끔하다","さっぱり"],
+["겨누다 / 준비하다","構える（かまえる）"],
+["무서운 호기심으로","怖いもの見たさに（こわいものみたさに）"],
+["임시방편","その場しのぎ（そのばしのぎ）"],
+["거슬리다","気に触る（きにさわる）"],
+["직화","直火（じかび）"],
+["대부분 / 거의","おおかた"],
+["편하게 쉬다","くつろぐ"],
+["품절 상태 / 물량 부족","品薄（しなうす）"],
+["심오하다","奥が深い（おくがふかい）"],
+["대중적","大衆的（たいしゅうてき）"],
+["쌀쌀맞다","そっけない"],
+["떠들썩하게 하다","賑わす（にぎわす）"],
+["공복","空腹（くうふく）"],
+["삶다","湯掻く（ゆがく）"],
+["무난","無難（ぶなん）"],
+["촌스럽다","野暮ったい（やぼったい）"],
+["잡탕 / 모아놓은 것","寄せ集め（よせあつめ）"],
+["밀어내다","突き放す（つきはなす）"],
+["미리 핑계 대다","予防線を張る（よぼうせんをはる）"],
+["지친 상태","くたびれ気味（くたびれぎみ）"],
+["뾰족해지다","尖る（とがる）"],
+["조사","調査（ちょうさ）"],
+["조카（여）","姪っ子（めいっこ）"],
+["조카（남）","甥っ子（おいっこ）"],
+["표 / 카드","札（ふだ）"],
+["그런 분위기다","風潮だ（ふうちょうだ）"],
+["안정적이다","安泰です（あんたいです）"],
+["강등","降格（こうかく）"],
+["하강","下降（かこう）"],
+["부기","簿記（ぼき）"],
+["감정이 북받치다","感極まる（かんきわまる）"],
+["억지로 떼다","剥がす（はがす）"],
+["만취","泥酔（でいすい）"],
+["재촉","催促（さいそく）"],
+["신고 / 제출","届出（とどけで）"],
+["명칭","名称（めいしょう）"],
+["선입선출","先入先出（せんにゅうせんしゅつ）"],
+["재고조사","棚卸（たなおろし）"],
+["후하다 / 넉넉하다","手厚い（てあつい）"],
+["남용","乱用（らんよう）"],
+["적정","適正（てきせい）"],
+["구두 전달","口頭で伝達（こうとうでつたたつ）"],
+["연동","紐付け（ひもづけ）"],
+["자기 객관화","自己を客観視（じこをきゃっかんし）"],
+["주행","走行（そうこう）"],
+["진료 명세서","診療明細書（しんりょうめいさいしょ）"],
+["공제","控除（こうじょ）"],
+["문제없이 / 차질없이","滞りなく（とどこおりなく）"],
+["말을 못함","口下手（くちべた）"],
+["폐업","廃業（はいぎょう）"],
+["수고를 알아주다","労う（ねぎらう）"],
+["김샜다 / 의욕 꺾임","萎えた（なえた）"],
+["폭력","暴力（ぼうりょく）"],
+["도항 / 해외 이동","渡航（とこう）"],
+["단발 / 일회성","単発（たんぱつ）"],
+["징그럽다","グロい"],
+["요금제","料金プラン（りょうきんプラン）"],
+["가로수","街路樹（がいろじゅ）"],
+["욕조에 몸 담그다","湯船に浸かる（ゆぶねにつかる）"],
+["커플링을 사다","ペアリングを買う"],
+["폭로당하다","晒される（さらされる）"],
+["드러내다","さらけ出す（さらけだす）"],
+["부럽고 분하다","うらやましくて悔しい（くやしい）"],
+["명품으로 치장하다","ブランドもので固める（かためる）"],
+["몰래 도망치다","バックれる"],
+["여유 / 유예","猶予（ゆうよ）"],
+["합작","合弁（ごうべん）"],
+["환율 상승","為替が上昇（かわせがじょうしょう）"],
+["방침","方針（ほうしん）"],
+["기죽다","気後れする（きおくれする）"],
+["완벽한 준비","万全の準備（ばんぜんのじゅんび）"],
+["상륙","上陸（じょうりく）"],
+["독려","呼びかけ（よびかけ）"],
+["각오 / 의욕","意気込み（いきごみ）"],
+["대신 결제","立て替え（たてかえ）"],
+["연장자","年長者（ねんちょうしゃ）"],
+["저장","貯蔵（ちょぞう）"],
+["정산","精算（せいさん）"],
+["전문","全文（ぜんぶん）"],
+["타국","他国（たこく）"],
+["추가하다 / 얹다","上乗せる（うわのせる）"],
+["대비하다","備える（そなえる）"],
+["숯불구이","炭火焼（すみびやき）"],
+["재정","財政（ざいせい）"],
+["환승","乗り継ぎ（のりつぎ）"],
+["너무 번들거림","テカリすぎ"],
+["무임승차","ただのり"],
+["결합","嵌合（かんごう）"],
+["공지","告知（こうち）"],
+["폭염","炎天（えんてん）"],
+["순진한 척","無邪気なふり（むじゃきなふり）"],
+["분포","分布（ぶんぷ）"],
+["심하게 욕함","罵倒（ばとう）"],
+["편파적인 시선","贔屓目（ひいきめ）"],
+["한숨 돌리다","一息つく（ひといきつく）"],
+["택배가 도착했다","宅配便が届いた（たくはいびんがとどいた）"],
+["기특하고 씩씩하다","健気で（けなげで）"],
+["짜증나고 억울해서","しゃくだし"],
+["멘탈 강하다","メンタル太い（ふとい）"],
+["떠보다","打診（だしん）"],
+["구분","区分（くぶん）"],
+["배정","アサイン"],
+["올리다 / 인상하다","引き上げる（ひきあげる）"],
+["게걸스럽게 먹다","むさぼり食う（むさぼりくう）"],
+["지시","指図（さしず）"],
+["눈치","デリカシー"],
+["딱딱함","カチカチ"],
+["초라하다","みすぼらしい"],
+["흩어져 있다","散らばってる（ちらばってる）"],
+["푸석푸석","パサパサ"],
+["막다른 곳","突き当たり（つきあたり）"],
+["할증","割り増し（わりまし）"],
+["손재주 좋다","器用ですね（きようですね）"],
+["입맛이 까다롭다","肥えた舌（こえたした）"],
+["다 먹어치우다","平らげる（たいらげる）"],
+["일방통행","一方通行（いっぽうつうこう）"],
+["소심","引っ込み思案（ひっこみじあん）"],
+["체면","体裁（ていさい）"],
+["뻔뻔하다","しらじらしい"],
+["역주행","逆走（ぎゃくそう）"],
+["적어도","少なくとも（すくなくとも）"],
+["책임전가","責任転嫁（せきにんてんか）"],
+["분별하다","弁える（わきまえる）"],
+["환불 금액","返金額（へんきんがく）"],
+["깊게 보다","見据える（みすえる）"],
+["재산","財産（ざいさん）"],
+["업무가 정체되어 있다","業務が停滞してる（ぎょうむがていたいしてる）"],
+["개인적인 일 / 볼일","所用（しょよう）"],
+["보강 수업","振替レッスン（ふりかえレッスン）"],
+["월회비제","月謝制（げっしゃせい）"],
+["동년배","同年代（どうねんだい）"],
+["균등","均等（きんとう）"],
+["아침 무렵","朝方（あさがた）"],
+["마지막으로 봄","見納め（みおさめ）"],
+["망침 / 엉망","台無し（だいなし）"],
+["반납","返上（へんじょう）"],
+["폭염","猛暑（もうしょ）"],
+["강자","猛者（もさ）"],
+["잘난 척하고 싶다","気取りたい（きどりたい）"],
+["깊이 스며들다","染み渡る（しみわたる）"],
+["대가를 치르다","対価を差し出す（たいかをさしだす）"],
+["부족해 보인다","物足りなく見える（ものたりなくみえる）"],
+["착수했다","取り掛かった（とりかかった）"],
+["뒷자리","後列（こうれつ）"],
+["즉흥적","即興的（そっきょうてき）"],
+["무작정","やみくもに"],
+["공 / 공적","手柄（てがら）"],
+["그림체","絵柄（えがら）"],
+["철자","綴り（つづり）"],
+["언니 같은 성격","姉御肌（あねごはだ）"],
+["임시","臨時（りんじ）"],
+["횡포","横暴（おうぼう）"],
+["적반하장이다","開き直ってる（ひらきなおってる）"],
+["꼴 좋다","いい気味（いいきみ）"],
+["자업자득","自業自得（じごうじとく）"],
+["정 떨어진다","ひかれちゃう"],
+["운반","運搬（うんぱん）"],
+["반입","搬入（はんにゅう）"],
+["앞당김","前倒し（まえだおし）"],
+["다음 달","翌月（よくつき）"],
+["거리 두다","距離を置く（きょりをおく）"],
+["악천후","荒天（こうてん）"],
+["꼬투리 잡히다","揚げ足を取られる（あげあしをとられる）"],
+["구실","口実（こうじつ）"],
+["감회가 깊다","感慨深い（かんがいぶかい）"],
+["착불 / 현금결제","代引き（だいびき）"],
+["환상이 깨지다","幻想が崩れる（げんそうがくずれる）"],
+["공론화하다","公にする（おおやけにする）"],
+["제안하다","持ち掛ける（もちかける）"],
+["임하다 / 착수하다","取り組む（とりくむ）"],
+["정리하다 / 취합하다","取りまとめ（とりまとめ）"],
+["당했다 / 당함","はめられた"],
+["빙빙 돌려서","まわりくどく"],
+["진심","真心（まごころ）"],
+["바깥쪽","外側（そとがわ）"],
+["학벌 파벌","学閥（がくばつ）"],
+["어필","訴求（そきゅう）"],
+["타협점","落とし所（おとしどころ）"],
+["수립","樹立（じゅりつ）"],
+["어리석음","愚かさ（おろかさ）"],
+["자재","資材（しざい）"],
+["5성급","五つ星（いつつぼし）"],
+["근속","勤続（きんぞく）"],
+["실존","実存（じつぞん）"],
+["말하면 나타난다 / 호랑이도 제 말 하면 온다","噂をすれば影（うわさをすればかげ）"],
+["저촉","抵触（ていしょく）"],
+["직판","直販（ちょくはん）"],
+["반영하다 / 녹여내다","落とし込む（おとしこむ）"],
+["집기","什器（じゅうき）"],
+["촉탁직","嘱託（しょくたく）"],
+["딴지 걸다","茶々を入れる（ちゃちゃをいれる）"],
+["맹수 조련사","猛獣使い（もうじゅうつかい）"],
+["인재 스카우트","引き抜き（ひきぬき）"],
+["양쪽 이득","両取り（りょうどり）"],
+["설득당하다","口説かれる（くどかれる）"],
+["수중 / 손에 있음","手元（てもと）"],
+["편승","相乗り（あいのり）"],
+["유격 / 여유 공간","遊び（あそび）"],
+["음력","旧暦（きゅうれき）"],
+["삐다 / 접질리다","くじく"],
+["요령 / 핵심 포인트","勘どころ（かんどころ）"],
+["연맹","連盟（れんめい）"],
+["개정","改正（かいせい）"],
+["세대차이","世代差（せだいさ）"],
+["건전","健全（けんぜん）"],
+["육교","歩道橋（ほどうきょう）"],
+["할당량","割当量（わりあてりょう）"],
+["방문하다（격식）","訪れる（おとずれる）"],
+["찾아가다 / 묻다","尋ねる（たずねる）"],
+["새치기 / 끼어들기","割り込み（わりこみ）"],
+["선수금","前受金（まえうけきん）"],
+["채무","債務（さいむ）"],
+["외상 거래","掛け取り引き（かけとりひき）"],
+["초안 / 베이스안","叩き台（たたきだい）"],
+["이직 / 퇴직","離職（りしょく）"],
+["압박을 주다","プレッシャーをかける"],
+["확답","確約（かくやく）"],
+["문의","問い合わせ（といあわせ）"],
+["편도","片道（かたみち）"],
+["중소기업","中小企業（ちゅうしょうきぎょう）"],
+["이해 / 흡수","飲み込み（のみこみ）"],
+["신고","通報（つうほう）"],
+["나쁜 꿍꿍이 꾸미다","悪だくみする（わるだくみする）"],
+["주문제작","オーダーメード"],
+["인종차별","人種差別（じんしゅさべつ）"],
+["즉시결정","即決（そっけつ）"],
+["매각","売却（ばいきゃく）"],
+["편차","ばらつき"],
+["둥근 형태를 띠다","丸みを帯びた（まるみをおびた）"],
+["찬반이 있다 / 호불호가 있다","賛否ある（さんぴある）"],
+["공산주의","共産主義（きょうさんしゅぎ）"],
+["법률을 제정하다","法律を制定する（ほうりつをせいていする）"],
+["짠순이","貧乏性（びんぼうしょう）"],
+["이야기의 결말 / 반전","オチ"],
+["돌팔이 의사","やぶ医者（やぶいしゃ）"],
+["억지논리","屁理屈（へりくつ）"],
+["꽉 끼다","食い込む（くいこむ）"],
+["멘붕 오다 / 당황하다","テンパる"],
+["미리 도착함","前乗り（まえのり）"],
+["통째로 빌리다","貸し切る（かしきる）"],
+["틈 / 사이","狭間（はざま）"],
+["늙어서 비실비실한 상태","ヨボヨボ"],
+];
+
+// ══════════════════════════════════════════════════════
+//  State
+// ══════════════════════════════════════════════════════
+let words  = JSON.parse(localStorage.getItem('miso_words')  || 'null');
+if (!words) {
+    words = RAW_DEFAULT.map(([korean, jpRaw]) => ({
+        ...parseJapanese(jpRaw), korean, memorized: false
+    }));
+    saveWords();
+}
+let stats  = JSON.parse(localStorage.getItem('miso_stats')  || '{"quizzes":0,"bestScore":0}');
+let currentFilter = 'all';
+
+let studyWords = [], studyIndex = 0, studyFlipped = false;
+let quizWords  = [], quizIndex  = 0, quizCorrect  = 0, quizAnswered = false;
+
+function saveWords()  { localStorage.setItem('miso_words',  JSON.stringify(words)); }
+function saveStats()  { localStorage.setItem('miso_stats',  JSON.stringify(stats)); }
+
+// ══════════════════════════════════════════════════════
+//  Navigation
+// ══════════════════════════════════════════════════════
+function showPage(name, btn) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    btn.classList.add('active');
+    hideGanadiPopup();
+    if (name === 'wordlist') renderWordList();
+    if (name === 'study')    initStudy();
+    if (name === 'quiz')     initQuiz();
+    if (name === 'stats')    renderStats();
+}
+
+// ══════════════════════════════════════════════════════
+//  Word List
+// ══════════════════════════════════════════════════════
+function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderWordList();
+}
+
+function filteredWords() {
+    if (currentFilter === 'memorized') return words.filter(w => w.memorized);
+    if (currentFilter === 'active')    return words.filter(w => !w.memorized);
+    return words;
+}
+
+function renderWordList() {
+    const list = filteredWords();
+    document.getElementById('word-count').textContent = `총 ${list.length}개 단어`;
+    const el = document.getElementById('word-list');
+    if (!list.length) {
+        el.innerHTML = `<div class="empty-state"><div class="emoji">🌸</div><p>${currentFilter === 'all' ? '단어를 추가해보세요!' : '해당하는 단어가 없어요'}</p></div>`;
+        return;
+    }
+    el.innerHTML = list.map(w => {
+        const idx = words.indexOf(w);
+        return `<div class="word-card ${w.memorized ? 'memorized' : ''}">
+            <div class="word-info">
+                ${w.furigana ? `<div class="word-furigana">${w.furigana}</div>` : ''}
+                <div class="word-japanese">${w.japanese}</div>
+                <div class="word-korean">${w.korean}</div>
+            </div>
+            <div class="word-actions">
+                <button class="btn-icon btn-check ${w.memorized ? 'checked' : ''}" onclick="toggleMemo(${idx})" title="${w.memorized ? '학습중으로' : '암기완료'}">✓</button>
+                <button class="btn-icon btn-delete" onclick="deleteWord(${idx})">🗑</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function toggleMemo(i) {
+    words[i].memorized = !words[i].memorized;
+    saveWords();
+    renderWordList();
+    if (words[i].memorized) {
+        setTimeout(() => showGanadiPopup('happy', '외웠어?? 짱이다!!! 🎉'), 400);
+    }
+}
+
+function deleteWord(i) {
+    if (confirm(`"${words[i].japanese}" 단어를 삭제할까요?`)) {
+        words.splice(i, 1);
+        saveWords();
+        renderWordList();
+    }
+}
+
+// ══════════════════════════════════════════════════════
+//  Add Word
+// ══════════════════════════════════════════════════════
+function addWord() {
+    const jp = document.getElementById('input-japanese').value.trim();
+    const fg = document.getElementById('input-furigana').value.trim();
+    const kr = document.getElementById('input-korean').value.trim();
+    if (!jp || !kr) { alert('일본어 단어와 한국어 뜻을 입력해주세요!'); return; }
+    words.push({ japanese: jp, furigana: fg, korean: kr, memorized: false });
+    saveWords();
+    ['input-japanese','input-furigana','input-korean'].forEach(id => document.getElementById(id).value = '');
+
+    const btn = document.getElementById('btn-add-word');
+    const orig = btn.textContent;
+    btn.textContent = '✅ 추가됐어요!';
+    btn.style.background = 'linear-gradient(135deg,#4caf50,#66bb6a)';
+    setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 1500);
+
+    // 가나디 랜덤 등장 (5단어마다, 또는 랜덤 20%)
+    if (words.length % 5 === 0) {
+        setTimeout(() => showGanadiPopup('excited', `${words.length}개째 단어!! 대단한데?? 🔥`), 600);
+    } else if (Math.random() < 0.2) {
+        setTimeout(() => showGanadiPopup('cheer', '단어가 늘어나고 있어!! 화이팅!!'), 600);
+    }
+
+    document.getElementById('input-japanese').focus();
+}
+
+function bulkAddWords() {
+    const text = document.getElementById('input-bulk').value.trim();
+    if (!text) return;
+    let added = 0;
+    text.split('\n').forEach(line => {
+        const parts = line.split(',').map(p => p.trim());
+        if (parts.length === 3 && parts[0] && parts[2]) {
+            words.push({ japanese: parts[0], furigana: parts[1], korean: parts[2], memorized: false });
+            added++;
+        } else if (parts.length === 2 && parts[0] && parts[1]) {
+            words.push({ japanese: parts[0], furigana: '', korean: parts[1], memorized: false });
+            added++;
+        }
+    });
+    saveWords();
+    document.getElementById('input-bulk').value = '';
+    if (added > 0) {
+        alert(`${added}개 단어가 추가됐어요! 🌸`);
+        setTimeout(() => showGanadiPopup('excited', `${added}개나 한번에!! 열정적인데?? 🔥`), 500);
+    }
+}
+
+// ══════════════════════════════════════════════════════
+//  Study (Flashcard)
+// ══════════════════════════════════════════════════════
+function initStudy() {
+    let pool = words.filter(w => !w.memorized);
+    if (!pool.length) pool = [...words];
+    studyWords = pool.sort(() => Math.random() - 0.5);
+    studyIndex = 0;
+    studyFlipped = false;
+    studyMsgIndex = 0;
+    renderStudy();
+}
+
+function renderStudy() {
+    const el = document.getElementById('study-content');
+    if (!words.length) {
+        el.innerHTML = `<div class="empty-state"><div class="emoji">📚</div><p>먼저 단어를 추가해보세요!</p></div>`;
+        return;
+    }
+    if (!studyWords.length) {
+        el.innerHTML = `<div class="empty-state"><div class="emoji">🎉</div><p>모든 단어를 다 외웠어요!</p></div>`;
+        setTimeout(() => showGanadiPopup('excited', '다 외웠어?? 완전 천재잖아!!!'), 400);
+        return;
+    }
+    const w = studyWords[studyIndex];
+    const pct = ((studyIndex + 1) / studyWords.length) * 100;
+    el.innerHTML = `
+        <div class="counter-text">${studyIndex + 1} / ${studyWords.length}</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div class="flashcard" onclick="flipStudy()">
+            ${studyFlipped
+                ? `<div style="font-size:13px;color:#aaa;margin-bottom:6px">${w.japanese}${w.furigana ? ' · ' + w.furigana : ''}</div>
+                   <div class="card-korean" style="font-size:28px;font-weight:700;color:#222;margin-top:0">${w.korean}</div>
+                   <div style="font-size:11px;color:#ddd;margin-top:20px">탭해서 다시 가리기</div>`
+                : `<div class="card-furigana">${w.furigana || '　'}</div>
+                   <div class="card-japanese">${w.japanese}</div>
+                   <div style="font-size:13px;color:#ddd;margin-top:20px">탭해서 뜻 확인 👆</div>`
+            }
+        </div>
+        <div class="card-buttons">
+            <button class="btn-secondary" style="background:#f5f5f5;color:#888" onclick="moveStudy(-1)">← 이전</button>
+            <button class="btn-secondary" style="background:linear-gradient(135deg,#ff6b9d,#ff8fab);color:white" onclick="moveStudy(1)">다음 →</button>
+        </div>
+        <button class="btn-primary" onclick="initStudy()" style="background:linear-gradient(135deg,#a78bfa,#c084fc)">🔀 다시 섞기</button>`;
+}
+
+function flipStudy() { studyFlipped = !studyFlipped; renderStudy(); }
+
+function moveStudy(dir) {
+    studyIndex = (studyIndex + dir + studyWords.length) % studyWords.length;
+    studyFlipped = false;
+    renderStudy();
+    // 5장마다 가나디 등장
+    if (studyIndex > 0 && studyIndex % 5 === 0) {
+        const [mood, msg] = STUDY_MESSAGES[studyMsgIndex % STUDY_MESSAGES.length];
+        studyMsgIndex++;
+        setTimeout(() => showGanadiPopup(mood, msg), 300);
+    }
+}
+
+// ══════════════════════════════════════════════════════
+//  Quiz
+// ══════════════════════════════════════════════════════
+function initQuiz() {
+    let pool = words.filter(w => !w.memorized);
+    if (pool.length < 4) pool = [...words];
+    if (pool.length < 4) {
+        document.getElementById('quiz-content').innerHTML =
+            `<div class="empty-state"><div class="emoji">🎯</div><p>퀴즈를 하려면<br>최소 4개 단어가 필요해요!</p></div>`;
+        return;
+    }
+    quizWords = pool.sort(() => Math.random() - 0.5);
+    quizIndex = 0; quizCorrect = 0; quizAnswered = false;
+    renderQuiz();
+}
+
+function renderQuiz() {
+    if (quizIndex >= quizWords.length) { showQuizResult(); return; }
+    const w = quizWords[quizIndex];
+    const pct = (quizIndex / quizWords.length) * 100;
+    quizAnswered = false;
+    const others = words.filter(x => x.korean !== w.korean).sort(() => Math.random() - 0.5).slice(0, 3);
+    const opts = [w, ...others].sort(() => Math.random() - 0.5);
+    document.getElementById('quiz-content').innerHTML = `
+        <div class="counter-text">${quizIndex + 1} / ${quizWords.length}</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div class="score-display">점수: ${quizCorrect} / ${quizIndex}</div>
+        <div class="quiz-question">
+            ${w.furigana ? `<div class="quiz-furigana">${w.furigana}</div>` : ''}
+            <div class="quiz-word">${w.japanese}</div>
+            <div class="quiz-sub">이 단어의 뜻은?</div>
+        </div>
+        <div class="quiz-options">
+            ${opts.map(o => `<button class="quiz-option" onclick="answerQuiz(this,'${esc(o.korean)}','${esc(w.korean)}')">${o.korean}</button>`).join('')}
+        </div>`;
+}
+
+function esc(s) { return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+let streak = 0;
+function answerQuiz(btn, selected, correct) {
+    if (quizAnswered) return;
+    quizAnswered = true;
+    const isCorrect = selected === correct;
+    document.querySelectorAll('.quiz-option').forEach(b => {
+        b.disabled = true;
+        if (b.textContent.trim() === correct) b.classList.add('correct');
+        else if (b === btn) b.classList.add('wrong');
+    });
+    if (isCorrect) {
+        quizCorrect++;
+        streak++;
+        if (streak === 3) setTimeout(() => showGanadiPopup('excited', '지리노!! 🔥'), 200);
+        else if (streak === 5) setTimeout(() => showGanadiPopup('excited', 'Damn Girl~!?'), 200);
+    } else {
+        streak = 0;
+        if (Math.random() < 0.35) setTimeout(() => showGanadiPopup('sad', '김미소 사원 즉시 귀국하도록'), 200);
+    }
+    setTimeout(() => { quizIndex++; renderQuiz(); }, 1100);
+}
+
+function showQuizResult() {
+    const total = quizWords.length;
+    const pct = Math.round(quizCorrect / total * 100);
+    stats.quizzes++;
+    if (pct > stats.bestScore) stats.bestScore = pct;
+    saveStats();
+
+    let mood, msg;
+    if (pct === 100) { mood = 'excited'; msg = '쓰껄 ㅋㅋ'; celebrate(); }
+    else if (pct >= 80) { mood = 'happy';   msg = '할렐야루 ㅋㅋ'; celebrate(); }
+    else if (pct >= 60) { mood = 'cheer';   msg = '야르 ㅋㅋ'; }
+    else if (pct >= 40) { mood = 'sad';     msg = '엥?'; }
+    else               { mood = 'crying';  msg = '접어라 ㅋㅋ'; }
+
+    document.getElementById('quiz-content').innerHTML = `
+        <div class="quiz-result">
+            <div class="result-ganadi">
+                ${ganadiSVG(mood, 110)}
+            </div>
+            <div class="result-score">${pct}%</div>
+            <div class="result-fraction">${quizCorrect} / ${total} 정답</div>
+            <div class="result-message">${msg}</div>
+            <button class="btn-primary" onclick="initQuiz()">🔄 다시 도전!</button>
+            <button class="btn-primary mt-12" onclick="document.querySelector('[data-page=wordlist]').click()" style="background:linear-gradient(135deg,#a78bfa,#c084fc)">📖 단어장 보기</button>
+        </div>`;
+    streak = 0;
+}
+
+// ══════════════════════════════════════════════════════
+//  Confetti
+// ══════════════════════════════════════════════════════
+function celebrate() {
+    const c = document.getElementById('confetti-container');
+    const colors = ['#ff6b9d','#ffb3c6','#ffd700','#a78bfa','#67e8f9','#86efac','#fb923c'];
+    for (let i = 0; i < 90; i++) {
+        const el = document.createElement('div');
+        el.className = 'confetti';
+        el.style.cssText = `left:${Math.random()*100}vw;top:-12px;
+            width:${Math.random()*10+5}px;height:${Math.random()*10+5}px;
+            background:${colors[Math.floor(Math.random()*colors.length)]};
+            border-radius:${Math.random()>.5?'50%':'3px'};
+            animation-duration:${Math.random()*2+2}s;
+            animation-delay:${Math.random()*1.2}s;`;
+        c.appendChild(el);
+    }
+    setTimeout(() => c.innerHTML = '', 4500);
+}
+
+// ══════════════════════════════════════════════════════
+//  Stats
+// ══════════════════════════════════════════════════════
+function renderStats() {
+    const total = words.length;
+    const mem   = words.filter(w => w.memorized).length;
+    const pct   = total ? Math.round(mem/total*100) : 0;
+    document.getElementById('stat-total').textContent     = total;
+    document.getElementById('stat-memorized').textContent = mem;
+    document.getElementById('stat-quizzes').textContent   = stats.quizzes;
+    document.getElementById('stat-best').textContent      = stats.bestScore + '%';
+    document.getElementById('stat-progress').style.width  = pct + '%';
+    document.getElementById('stat-progress-text').textContent = `${mem} / ${total} (${pct}%)`;
+}
+
+function resetStats() {
+    if (confirm('통계를 초기화할까요?')) {
+        stats = { quizzes: 0, bestScore: 0 };
+        saveStats();
+        renderStats();
+    }
+}
+
+// ══════════════════════════════════════════════════════
+//  Init
+// ══════════════════════════════════════════════════════
+// 헤더에 작은 가나디
+document.getElementById('header-ganadi-wrap').innerHTML = ganadiSVG('normal', 48);
+
+// 랜덤 가나디 (60~120초마다)
+function scheduleRandomGanadi() {
+    const delay = (60 + Math.random() * 60) * 1000;
+    setTimeout(() => {
+        const isStudying = document.getElementById('page-study').classList.contains('active');
+        const isQuizzing = document.getElementById('page-quiz').classList.contains('active');
+        if (!isStudying && !isQuizzing) {
+            const randoms = [
+                ['skep',    '머함?'],
+                ['cheer',   '아 똥마려'],
+                ['sleepy',  '두쫀쿠 가온나'],
+                ['excited', '앙앙'],
+            ];
+            const [m, msg] = randoms[Math.floor(Math.random() * randoms.length)];
+            showGanadiPopup(m, msg);
+        }
+        scheduleRandomGanadi();
+    }, delay);
+}
+scheduleRandomGanadi();
+
+// 키보드 단축키 (추가 폼)
+document.addEventListener('DOMContentLoaded', () => {
+    const ids = ['input-japanese','input-furigana','input-korean'];
+    ids.forEach((id, i) => {
+        document.getElementById(id)?.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                if (i < ids.length - 1) document.getElementById(ids[i+1]).focus();
+                else addWord();
+            }
+        });
+    });
+});
+
+renderWordList();
+</script>
+</body>
+</html>
