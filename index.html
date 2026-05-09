@@ -373,14 +373,15 @@ function ganadiSVG(mood = 'normal', size = 80) {
 let popupTimer = null;
 
 const STUDY_MESSAGES = [
-    ['cheer',   '화이팅!! 잘 하고 있어!! 🔥'],
-    ['skep',    '외우고 있는 거 맞지..? 🤔'],
-    ['excited', '이 정도면 일본 가도 되겠는데!!'],
-    ['sleepy',  '졸려? 졸려도 참아!! 💪'],
-    ['cheer',   '오늘도 열심히!! 최고야~'],
-    ['skep',    '조금만 더!! 할 수 있어!!'],
-    ['happy',   '멋있다... 역시 미소야!! 🌸'],
-    ['sleepy',  '잠깐 쉬어도 돼... 근데 너무 오래는 안 돼 😂'],
+    ['cheer',   '마 제대로 해라'],
+    ['skep',    '자노?'],
+    ['excited', '귀국해라'],
+    ['sleepy',  '두쫀쿠 가온나'],
+    ['cheer',   '아 똥마려'],
+    ['skep',    '바람 피지'],
+    ['happy',   '할렐야루 ㅋㅋ'],
+    ['sleepy',  '김미소 뚱뚱이'],
+    ['excited', '앙앙'],
 ];
 let studyMsgIndex = 0;
 
@@ -820,7 +821,7 @@ function bulkAddWords() {
     document.getElementById('input-bulk').value = '';
     if (added > 0) {
         alert(`${added}개 단어가 추가됐어요! 🌸`);
-        setTimeout(() => showGanadiPopup('excited', `${added}개나 한번에!! 열정적인데?? 🔥`), 500);
+        setTimeout(() => showGanadiPopup('excited', `${added}개나 외운다고?`), 500);
     }
 }
 
@@ -844,8 +845,8 @@ function renderStudy() {
         return;
     }
     if (!studyWords.length) {
-        el.innerHTML = `<div class="empty-state"><div class="emoji">🎉</div><p>모든 단어를 다 외웠어요!</p></div>`;
-        setTimeout(() => showGanadiPopup('excited', '다 외웠어?? 완전 천재잖아!!!'), 400);
+        el.innerHTML = `<div class="empty-state"><div class="emoji">🎉</div><p>쓰꾸삐?</p></div>`;
+        setTimeout(() => showGanadiPopup('excited', '야르 ㅋㅋ'), 400);
         return;
     }
     const w = studyWords[studyIndex];
