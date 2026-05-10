@@ -250,6 +250,48 @@
         .result-ganadi { display: flex; flex-direction: column; align-items: center; margin-bottom: 16px; }
 
         .mt-12 { margin-top: 12px; }
+
+        /* ── 특별 사진 팝업 ─────────────────────────── */
+        .special-popup {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%) translateY(120%);
+            z-index: 600;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 20px;
+            opacity: 0;
+            transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s;
+            pointer-events: none;
+        }
+        .special-popup.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .special-popup-bubble {
+            background: white;
+            border: 2.5px solid #ffb3c6;
+            border-radius: 20px;
+            padding: 10px 22px;
+            font-size: 18px;
+            font-weight: 800;
+            color: #ff6b9d;
+            box-shadow: 0 4px 20px rgba(255,107,157,0.2);
+            white-space: nowrap;
+        }
+        .special-popup-img {
+            width: 200px;
+            height: auto;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            cursor: pointer;
+            display: block;
+        }
+        .special-tap-hint { font-size: 10px; color: #ccc; }
     </style>
 </head>
 <body>
@@ -342,6 +384,13 @@
     <div class="ganadi-bubble" id="ganadi-bubble"></div>
     <div class="ganadi-svg-wrap ganadi-bounce" onclick="hideGanadiPopup()" id="ganadi-popup-svg"></div>
     <div class="ganadi-tap-hint">탭해서 닫기</div>
+</div>
+
+<!-- 특별 사진 팝업 -->
+<div class="special-popup" id="special-popup" onclick="hideSpecialPopup()">
+    <div class="special-popup-bubble" id="special-popup-msg"></div>
+    <img class="special-popup-img" id="special-popup-img" src="" alt="">
+    <div class="special-tap-hint">탭해서 닫기</div>
 </div>
 
 <div class="confetti-container" id="confetti-container"></div>
@@ -925,6 +974,7 @@ function renderQuiz() {
 function esc(s) { return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 
 let streak = 0;
+let wrongStreak = 0;
 function answerQuiz(btn, selected, correct) {
     if (quizAnswered) return;
     quizAnswered = true;
@@ -937,11 +987,18 @@ function answerQuiz(btn, selected, correct) {
     if (isCorrect) {
         quizCorrect++;
         streak++;
+        wrongStreak = 0;
         if (streak === 3) setTimeout(() => showGanadiPopup('excited', '지리노!! 🔥'), 200);
         else if (streak === 5) setTimeout(() => showGanadiPopup('excited', 'Damn Girl~!?'), 200);
     } else {
         streak = 0;
-        if (Math.random() < 0.35) setTimeout(() => showGanadiPopup('sad', '김미소 사원 즉시 귀국하도록'), 200);
+        wrongStreak++;
+        if (wrongStreak >= 2) {
+            setTimeout(() => showSpecialPopup('anime.jpg', '볘에에', 3500), 300);
+            wrongStreak = 0;
+        } else {
+            setTimeout(() => showSpecialPopup('girl_merong.jpg', '메렁', 3000), 300);
+        }
     }
     setTimeout(() => { quizIndex++; renderQuiz(); }, 1100);
 }
@@ -1022,6 +1079,37 @@ function resetStats() {
 // ══════════════════════════════════════════════════════
 // 헤더에 작은 가나디
 document.getElementById('header-ganadi-wrap').innerHTML = ganadiSVG('normal', 48);
+
+// ── 특별 사진 팝업 ──────────────────────────────────
+let specialTimer = null;
+
+function showSpecialPopup(src, message, duration = 4000) {
+    clearTimeout(specialTimer);
+    document.getElementById('special-popup-img').src = src;
+    document.getElementById('special-popup-msg').textContent = message;
+    document.getElementById('special-popup').classList.add('show');
+    specialTimer = setTimeout(hideSpecialPopup, duration);
+}
+
+function hideSpecialPopup() {
+    clearTimeout(specialTimer);
+    document.getElementById('special-popup').classList.remove('show');
+}
+
+// 남자 사진 - 접속 후 1분 이내 랜덤 등장
+setTimeout(() => {
+    showSpecialPopup('boy.jpg', '생일 야르ㄹㄹㄹ~', 6000);
+}, Math.random() * 55000 + 3000);
+
+// 강아지 - 3~8분마다 가끔
+function scheduleDog() {
+    const delay = (180 + Math.random() * 300) * 1000;
+    setTimeout(() => {
+        showSpecialPopup('dog.jpg', '왈', 3000);
+        scheduleDog();
+    }, delay);
+}
+scheduleDog();
 
 // 랜덤 가나디 (60~120초마다)
 function scheduleRandomGanadi() {
