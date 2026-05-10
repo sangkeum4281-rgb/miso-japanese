@@ -944,11 +944,11 @@ function answerQuiz(btn, selected, correct) {
         wrongStreak = 0;
         // 맞을 때: 가나디(cheer/happy/excited) + 남자사진 중 랜덤
         const correctPool = [
-            () => showGanadiPopup('cheer',   '야르!! 🌸'),
-            () => showGanadiPopup('happy',   '오 맞았네 ㅋ'),
-            () => showGanadiPopup('excited', '굳굳!!'),
-            () => showGanadiPopup('cheer',   '역시 미소야~'),
-            () => showGanadiPopup('happy',   '잘하네 잘하네 👍'),
+            () => showGanadiPopup('cheer',   '야르 🌸'),
+            () => showGanadiPopup('happy',   '좀 치노'),
+            () => showGanadiPopup('excited', '쓰껄ㅋㅋ'),
+            () => showGanadiPopup('cheer',   '앙앙'),
+            () => showGanadiPopup('happy',   '미소는 축구 천재라네'),
             () => showSpecialPopup('boy.jpg', streak >= 3 ? '생일 야르ㄹㄹㄹ~' : '야르'),
         ];
         setTimeout(() => correctPool[Math.floor(Math.random() * correctPool.length)](), 200);
@@ -957,9 +957,9 @@ function answerQuiz(btn, selected, correct) {
         wrongStreak++;
         // 틀릴 때: 가나디(sad/skep) + 여자메롱 중 랜덤 (2연속이면 애니 추가)
         const wrongPool = [
-            () => showGanadiPopup('sad',  '엥?? ㅋㅋ'),
-            () => showGanadiPopup('skep', '진짜요?'),
-            () => showGanadiPopup('sad',  '아쉽당 ㅠ'),
+            () => showGanadiPopup('sad',  '엥?? '),
+            () => showGanadiPopup('skep', '개못하노 ㅋㅋ'),
+            () => showGanadiPopup('sad',  '김미소 사원 즉시 귀국하도록'),
             () => showSpecialPopup('girl_merong.jpg', '메렁'),
         ];
         if (wrongStreak >= 2) {
