@@ -882,13 +882,18 @@ function renderStudy() {
 
 function flipStudy() { studyFlipped = !studyFlipped; renderStudy(); }
 
+let _ttsAudio = null;
 function speakWord(text) {
-    if (!window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const utt = new SpeechSynthesisUtterance(text);
-    utt.lang = 'ja-JP';
-    utt.rate = 0.85;
-    window.speechSynthesis.speak(utt);
+    if (_ttsAudio) { _ttsAudio.pause(); _ttsAudio = null; }
+    const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=ja&client=tw-ob`;
+    _ttsAudio = new Audio(url);
+    _ttsAudio.play().catch(() => {
+        if (!window.speechSynthesis) return;
+        window.speechSynthesis.cancel();
+        const utt = new SpeechSynthesisUtterance(text);
+        utt.lang = 'ja-JP';
+        window.speechSynthesis.speak(utt);
+    });
 }
 
 function moveStudy(dir) {
