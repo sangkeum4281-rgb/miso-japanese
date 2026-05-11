@@ -217,6 +217,8 @@
             overflow-y: scroll;
             -webkit-overflow-scrolling: touch;
             padding: 8px 14px;
+            display: flex;
+            flex-direction: column-reverse;
         }
 
         .chat-input-wrap {
@@ -1346,31 +1348,27 @@ function renderLetters(items) {
         el.innerHTML = `<div style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:#ddd;font-size:14px;padding:40px 0;">💌<br>첫 메시지를 보내봐!</div>`;
         return;
     }
-    el.innerHTML = items.map((item, i) => {
-        const info = SENDER_INFO[item.sender] || SENDER_INFO.me;
-        const prev = items[i - 1];
-        const next = items[i + 1];
-        const sameAsPrev = prev && prev.sender === item.sender;
-        const sameAsNext = next && next.sender === item.sender;
-        const diffFromPrev = !prev || prev.sender !== item.sender;
+    // 최신순으로 뒤집어 렌더 → column-reverse가 다시 뒤집어 최신이 아래에 표시됨
+    const rev = [...items].reverse();
+    el.innerHTML = rev.map((item, i) => {
+        const info    = SENDER_INFO[item.sender] || SENDER_INFO.me;
+        const newer   = rev[i - 1]; // 시각적으로 아래 (더 최신)
+        const older   = rev[i + 1]; // 시각적으로 위 (더 오래된)
+        const sameNewer = newer && newer.sender === item.sender;
+        const sameOlder = older && older.sender === item.sender;
         const time = new Date(item.ts).toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' });
-        const showAvatar = !sameAsNext;
-        const showName  = !sameAsPrev;
-        return `<div class="bubble-wrap ${item.sender}${diffFromPrev ? ' gap' : ''}">
-            <img class="bubble-avatar${showAvatar ? '' : ' hidden'}" src="${info.avatar}" alt="${info.name}">
+        return `<div class="bubble-wrap ${item.sender}${!sameOlder && older ? ' gap' : ''}">
+            <img class="bubble-avatar${!sameNewer ? '' : ' hidden'}" src="${info.avatar}" alt="${info.name}">
             <div class="bubble-col">
-                ${showName ? `<span class="bubble-name">${info.name}</span>` : ''}
+                ${!sameOlder ? `<span class="bubble-name">${info.name}</span>` : ''}
                 <div class="bubble">${item.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>
-                ${!sameAsNext ? `<div class="bubble-meta">
+                ${!sameNewer ? `<div class="bubble-meta">
                     <span class="bubble-time">${time}</span>
                     <button class="bubble-del" onclick="deleteLetter('${item.key}')">✕</button>
                 </div>` : ''}
             </div>
         </div>`;
-    }).join('') + '<div id="chat-bottom"></div>';
-    setTimeout(() => {
-        document.getElementById('chat-bottom')?.scrollIntoView();
-    }, 50);
+    }).join('');
 }
 
 function sendLetter() {
@@ -1380,9 +1378,6 @@ function sendLetter() {
     db.ref('letters').push({ sender: letterSender, text, ts: Date.now() });
     input.value = '';
     input.style.height = 'auto';
-    setTimeout(() => {
-        document.getElementById('chat-bottom')?.scrollIntoView();
-    }, 50);
 }
 
 function deleteLetter(key) {
