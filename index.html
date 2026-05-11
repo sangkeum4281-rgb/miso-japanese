@@ -214,11 +214,8 @@
 
         #letter-list {
             flex: 1; min-height: 0;
-            overflow-y: scroll;
-            -webkit-overflow-scrolling: touch;
+            overflow-y: auto;
             padding: 8px 14px;
-            display: flex;
-            flex-direction: column-reverse;
         }
 
         .chat-input-wrap {
@@ -1342,30 +1339,31 @@ window.addEventListener('resize', () => {
 function renderLetters(items) {
     const el = document.getElementById('letter-list');
     if (!items.length) {
-        el.innerHTML = `<div style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:#ddd;font-size:14px;padding:40px 0;">💌<br>첫 메시지를 보내봐!</div>`;
+        el.innerHTML = `<div style="text-align:center;color:#ddd;padding:40px 0;font-size:14px;">💌<br>첫 메시지를 보내봐!</div>`;
         return;
     }
-    // 최신순으로 뒤집어 렌더 → column-reverse가 다시 뒤집어 최신이 아래에 표시됨
-    const rev = [...items].reverse();
-    el.innerHTML = rev.map((item, i) => {
-        const info    = SENDER_INFO[item.sender] || SENDER_INFO.me;
-        const newer   = rev[i - 1]; // 시각적으로 아래 (더 최신)
-        const older   = rev[i + 1]; // 시각적으로 위 (더 오래된)
-        const sameNewer = newer && newer.sender === item.sender;
-        const sameOlder = older && older.sender === item.sender;
-        const time = new Date(item.ts).toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' });
-        return `<div class="bubble-wrap ${item.sender}${!sameOlder && older ? ' gap' : ''}">
-            <img class="bubble-avatar${!sameNewer ? '' : ' hidden'}" src="${info.avatar}" alt="${info.name}">
+    // 시간순(오래된 것 위, 최신 것 아래)으로 렌더
+    el.innerHTML = items.map((item, i) => {
+        const info     = SENDER_INFO[item.sender] || SENDER_INFO.me;
+        const prev     = items[i - 1];
+        const next     = items[i + 1];
+        const samePrev = prev && prev.sender === item.sender;
+        const sameNext = next && next.sender === item.sender;
+        const time     = new Date(item.ts).toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' });
+        return `<div class="bubble-wrap ${item.sender}${!samePrev && prev ? ' gap' : ''}">
+            <img class="bubble-avatar${!sameNext ? '' : ' hidden'}" src="${info.avatar}" alt="${info.name}">
             <div class="bubble-col">
-                ${!sameOlder ? `<span class="bubble-name">${info.name}</span>` : ''}
+                ${!samePrev ? `<span class="bubble-name">${info.name}</span>` : ''}
                 <div class="bubble">${item.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>
-                ${!sameNewer ? `<div class="bubble-meta">
+                ${!sameNext ? `<div class="bubble-meta">
                     <span class="bubble-time">${time}</span>
                     <button class="bubble-del" onclick="deleteLetter('${item.key}')">✕</button>
                 </div>` : ''}
             </div>
         </div>`;
     }).join('');
+    // 렌더 직후 즉시 맨 아래로 스크롤
+    el.scrollTop = el.scrollHeight;
 }
 
 function sendLetter() {
