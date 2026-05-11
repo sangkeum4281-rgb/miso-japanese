@@ -434,6 +434,13 @@
         body.excel-mode .bubble-name { color: #217346 !important; }
         body.excel-mode .bubble-time { color: #888 !important; }
 
+        /* 이모지 숨기기 */
+        body.excel-mode .bubble-avatar,
+        body.excel-mode .result-ganadi,
+        body.excel-mode #header-ganadi-wrap { display: none !important; }
+        body.excel-mode .nav-btn span:first-child { display: none !important; }
+        body.excel-mode .empty-state .emoji { display: none !important; }
+
         body.excel-mode .ganadi-popup,
         body.excel-mode .confetti-container,
         body.excel-mode #boss-mode { display: none !important; }
@@ -1562,10 +1569,21 @@ _letterInput.addEventListener('input', function() {
 // ══════════════════════════════════════════════════════
 //  엑셀 모드 토글
 // ══════════════════════════════════════════════════════
+const EMOJI_RE = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu;
+
+function stripEmoji(el) {
+    el.querySelectorAll('button, .btn-primary, .section-title, h1, h2, label').forEach(node => {
+        node.childNodes.forEach(n => {
+            if (n.nodeType === 3) n.textContent = n.textContent.replace(EMOJI_RE, '').trim();
+        });
+    });
+}
+
 function toggleExcelMode() {
     document.body.classList.toggle('excel-mode');
-    document.getElementById('excel-toggle').textContent =
-        document.body.classList.contains('excel-mode') ? '🌸' : '📊';
+    const on = document.body.classList.contains('excel-mode');
+    document.getElementById('excel-toggle').textContent = on ? '🌸' : '📊';
+    if (on) stripEmoji(document.body);
 }
 
 // ══════════════════════════════════════════════════════
