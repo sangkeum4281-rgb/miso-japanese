@@ -1334,32 +1334,42 @@ window.addEventListener('resize', () => {
     if (document.getElementById('page-letter').classList.contains('active')) setLetterHeight();
 });
 
+let _renderedKeys = new Set();
+
 function renderLetters(items) {
     const el = document.getElementById('letter-list');
+
     if (!items.length) {
         el.innerHTML = `<div style="text-align:center;color:#ddd;padding:40px 0;font-size:14px;">💌<br>첫 메시지를 보내봐!</div>`;
+        _renderedKeys.clear();
         return;
     }
-    // 시간순(오래된 것 위, 최신 것 아래)으로 렌더
-    el.innerHTML = items.map((item, i) => {
-        const info     = SENDER_INFO[item.sender] || SENDER_INFO.me;
-        const prev     = items[i - 1];
-        const next     = items[i + 1];
-        const samePrev = prev && prev.sender === item.sender;
-        const sameNext = next && next.sender === item.sender;
-        const time     = new Date(item.ts).toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' });
-        return `<div class="bubble-wrap ${item.sender}${!samePrev && prev ? ' gap' : ''}">
-            <img class="bubble-avatar${!sameNext ? '' : ' hidden'}" src="${info.avatar}" alt="${info.name}">
+
+    // 삭제 등으로 DB 줄어들면 전체 다시 그리기
+    if (items.length < _renderedKeys.size) {
+        el.innerHTML = '';
+        _renderedKeys.clear();
+    }
+
+    // 새 메시지만 추가 (기존 것은 건드리지 않음)
+    items.forEach(item => {
+        if (_renderedKeys.has(item.key)) return;
+        _renderedKeys.add(item.key);
+
+        const info = SENDER_INFO[item.sender] || SENDER_INFO.me;
+        const time = new Date(item.ts).toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' });
+        const div  = document.createElement('div');
+        div.className = `bubble-wrap ${item.sender}`;
+        div.innerHTML = `
+            <img class="bubble-avatar" src="${info.avatar}" alt="${info.name}">
             <div class="bubble-col">
-                ${!samePrev ? `<span class="bubble-name">${info.name}</span>` : ''}
+                <span class="bubble-name">${info.name}</span>
                 <div class="bubble">${item.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>
-                ${!sameNext ? `<div class="bubble-meta">
-                    <span class="bubble-time">${time}</span>
-                </div>` : ''}
-            </div>
-        </div>`;
-    }).join('');
-    // 렌더 직후 즉시 맨 아래로 스크롤
+                <div class="bubble-meta"><span class="bubble-time">${time}</span></div>
+            </div>`;
+        el.appendChild(div);
+    });
+
     el.scrollTop = el.scrollHeight;
 }
 
