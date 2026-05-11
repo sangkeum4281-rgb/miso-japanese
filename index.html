@@ -1355,7 +1355,6 @@ function renderLetters(items) {
                 <div class="bubble">${item.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>
                 ${!sameNext ? `<div class="bubble-meta">
                     <span class="bubble-time">${time}</span>
-                    <button class="bubble-del" onclick="deleteLetter('${item.key}')">✕</button>
                 </div>` : ''}
             </div>
         </div>`;
