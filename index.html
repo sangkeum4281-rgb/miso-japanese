@@ -1379,7 +1379,7 @@ function deleteLetter(key) {
 // 채팅 입력창
 const _letterInput = document.getElementById('letter-input');
 _letterInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendLetter(); }
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); sendLetter(); }
 });
 _letterInput.addEventListener('input', function() {
     this.style.height = 'auto';
