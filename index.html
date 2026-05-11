@@ -1514,10 +1514,11 @@ const SENDER_INFO = {
 
 function setSender(who) {
     letterSender = who;
-    document.getElementById('letter-sender-me').style.background   = who === 'me'   ? '#ff6b9d' : 'white';
-    document.getElementById('letter-sender-me').style.color        = who === 'me'   ? 'white'   : '#bbb';
-    document.getElementById('letter-sender-miso').style.background = who === 'miso' ? '#ff6b9d' : 'white';
-    document.getElementById('letter-sender-miso').style.color      = who === 'miso' ? 'white'   : '#bbb';
+    const active = document.body.classList.contains('excel-mode') ? '#217346' : '#ff6b9d';
+    document.getElementById('letter-sender-me').style.background   = who === 'me'   ? active  : 'white';
+    document.getElementById('letter-sender-me').style.color        = who === 'me'   ? 'white' : '#bbb';
+    document.getElementById('letter-sender-miso').style.background = who === 'miso' ? active  : 'white';
+    document.getElementById('letter-sender-miso').style.color      = who === 'miso' ? 'white' : '#bbb';
 }
 
 function setLetterHeight() {}
@@ -1617,6 +1618,7 @@ function toggleExcelMode() {
     const on = document.body.classList.contains('excel-mode');
     document.getElementById('excel-toggle').textContent = on ? '🌸' : '📊';
     if (on) stripEmoji(document.body);
+    setSender(letterSender);
 }
 
 // ══════════════════════════════════════════════════════
