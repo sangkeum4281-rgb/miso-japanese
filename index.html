@@ -1317,9 +1317,6 @@ function setLetterHeight() {
     const topH = document.querySelector('.header').offsetHeight
                + document.querySelector('.nav').offsetHeight;
     document.getElementById('letter-list').style.paddingTop = (topH + 8) + 'px';
-    // 입력창이 가리는 만큼 하단 여백
-    const inputH = document.querySelector('.chat-input-wrap').offsetHeight;
-    document.getElementById('letter-list').style.paddingBottom = (inputH + 8) + 'px';
 }
 
 function initLetter() {
