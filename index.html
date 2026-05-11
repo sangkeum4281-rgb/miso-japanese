@@ -197,7 +197,8 @@
         /* Chat */
         #page-letter {
             display: none; flex-direction: column; padding: 0;
-            height: calc(100vh - 106px); /* header + nav */
+            min-height: 0 !important;
+            overflow: hidden;
         }
         #page-letter.active { display: flex; }
 
@@ -1300,7 +1301,17 @@ function setSender(who) {
     document.getElementById('letter-sender-miso').style.color      = who === 'miso' ? 'white'   : '#bbb';
 }
 
+function setLetterHeight() {
+    const header = document.querySelector('.header');
+    const nav    = document.querySelector('.nav');
+    const page   = document.getElementById('page-letter');
+    const h = window.innerHeight - header.offsetHeight - nav.offsetHeight;
+    page.style.height    = h + 'px';
+    page.style.maxHeight = h + 'px';
+}
+
 function initLetter() {
+    setLetterHeight();
     if (!db) {
         document.getElementById('letter-list').innerHTML =
             `<div class="empty-state"><div class="emoji">⚠️</div><p>Firebase 설정이 필요해요.<br>코드 상단 FIREBASE_CONFIG를 채워주세요!</p></div>`;
@@ -1314,6 +1325,10 @@ function initLetter() {
         renderLetters(items);
     });
 }
+
+window.addEventListener('resize', () => {
+    if (document.getElementById('page-letter').classList.contains('active')) setLetterHeight();
+});
 
 function renderLetters(items) {
     const el = document.getElementById('letter-list');
@@ -1343,7 +1358,7 @@ function renderLetters(items) {
             </div>
         </div>`;
     }).join('');
-    requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
+    setTimeout(() => { el.scrollTop = el.scrollHeight; }, 50);
 }
 
 function sendLetter() {
