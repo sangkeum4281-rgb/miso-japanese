@@ -1316,9 +1316,10 @@ function initLetter() {
     }
     if (letterListenerAttached) return;
     letterListenerAttached = true;
-    db.ref('letters').orderByChild('ts').on('value', snap => {
+    db.ref('letters').on('value', snap => {
         const items = [];
         snap.forEach(c => items.push({ key: c.key, ...c.val() }));
+        items.sort((a, b) => a.ts - b.ts);
         renderLetters(items);
     });
 }
@@ -1349,6 +1350,7 @@ function renderLetters(items) {
             </div>
         </div>`;
     }).join('');
+    el.scrollTop = el.scrollHeight;
 }
 
 function sendLetter() {
