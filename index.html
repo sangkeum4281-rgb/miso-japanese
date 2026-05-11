@@ -194,29 +194,87 @@
         .empty-state .emoji { font-size: 64px; margin-bottom: 14px; }
         .empty-state p { font-size: 16px; line-height: 1.6; }
 
-        /* Letter chat */
-        #page-letter { display: none; flex-direction: column; padding: 16px 16px 0; }
+        /* Chat */
+        #page-letter {
+            display: none; flex-direction: column; padding: 0;
+            height: calc(100vh - 106px); /* header + nav */
+        }
         #page-letter.active { display: flex; }
-        #letter-list { flex: 1; overflow-y: auto; padding-bottom: 8px; }
 
-        .bubble-wrap { display: flex; margin-bottom: 12px; gap: 8px; }
+        #letter-list {
+            flex: 1; overflow-y: auto;
+            padding: 16px 14px 8px;
+            display: flex; flex-direction: column; gap: 4px;
+            background: #fdf6f9;
+        }
+
+        .chat-input-wrap {
+            display: flex; flex-direction: column; gap: 0;
+            background: white;
+            border-top: 1px solid #f0d6e4;
+        }
+        .chat-sender-row {
+            display: flex; border-bottom: 1px solid #fce4ec;
+        }
+        .chat-sender-btn {
+            flex: 1; padding: 9px 0; border: none; background: white;
+            font-size: 13px; font-weight: 700; color: #ccc; cursor: pointer;
+            transition: all 0.15s;
+        }
+        .chat-sender-btn.active { color: #ff6b9d; border-bottom: 2px solid #ff6b9d; }
+        .chat-input-row { display: flex; align-items: flex-end; gap: 8px; padding: 10px 12px; }
+        #letter-input {
+            flex: 1; padding: 10px 14px;
+            border: 1.5px solid #fce4ec; border-radius: 20px;
+            font-size: 15px; font-family: inherit;
+            resize: none; outline: none; line-height: 1.5;
+            max-height: 100px; overflow-y: auto;
+            background: #fff8fb;
+        }
+        #letter-input:focus { border-color: #ffb3c6; }
+        .chat-send-btn {
+            width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+            background: linear-gradient(135deg, #ff6b9d, #ff8fab);
+            color: white; border: none; font-size: 18px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: opacity 0.15s;
+        }
+        .chat-send-btn:active { opacity: 0.8; }
+
+        /* Bubbles */
+        .bubble-wrap { display: flex; align-items: flex-end; gap: 6px; margin-bottom: 2px; }
         .bubble-wrap.me   { flex-direction: row-reverse; }
         .bubble-wrap.miso { flex-direction: row; }
+        .bubble-wrap.gap  { margin-top: 10px; }
 
-        .bubble-avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; flex-shrink: 0; align-self: flex-end; }
-        .bubble-content { max-width: 72%; display: flex; flex-direction: column; gap: 4px; }
-        .bubble-wrap.me   .bubble-content { align-items: flex-end; }
-        .bubble-wrap.miso .bubble-content { align-items: flex-start; }
-
-        .bubble-name { font-size: 11px; color: #bbb; }
-        .bubble {
-            padding: 11px 14px; border-radius: 18px;
-            font-size: 15px; line-height: 1.65; white-space: pre-wrap; word-break: break-all;
+        .bubble-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            object-fit: cover; flex-shrink: 0; align-self: flex-start;
         }
-        .bubble-wrap.me   .bubble { background: #ff6b9d; color: white; border-bottom-right-radius: 4px; }
-        .bubble-wrap.miso .bubble { background: #f5f5f5; color: #333; border-bottom-left-radius: 4px; }
+        .bubble-avatar.hidden { visibility: hidden; }
+        .bubble-col { display: flex; flex-direction: column; gap: 3px; max-width: 72%; }
+        .bubble-wrap.me   .bubble-col { align-items: flex-end; }
+        .bubble-wrap.miso .bubble-col { align-items: flex-start; }
+
+        .bubble-name { font-size: 11px; color: #bbb; margin-bottom: 2px; padding: 0 4px; }
+        .bubble {
+            display: inline-block;
+            padding: 10px 14px; border-radius: 18px;
+            font-size: 15px; line-height: 1.6;
+            white-space: pre-wrap; word-break: break-all;
+        }
+        .bubble-wrap.me   .bubble {
+            background: #ff6b9d; color: white;
+            border-bottom-right-radius: 5px;
+        }
+        .bubble-wrap.miso .bubble {
+            background: white; color: #222;
+            border-bottom-left-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        .bubble-meta { display: flex; align-items: center; gap: 4px; padding: 0 4px; }
         .bubble-time { font-size: 10px; color: #ccc; }
-        .bubble-del { background: none; border: none; font-size: 12px; color: #ddd; cursor: pointer; padding: 0 2px; }
+        .bubble-del  { background: none; border: none; font-size: 11px; color: #e0c0cc; cursor: pointer; line-height: 1; }
 
         /* Confetti */
         .confetti-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
@@ -363,19 +421,17 @@
         <button class="btn-primary" onclick="resetStats()" style="background:linear-gradient(135deg,#bbb,#ccc);">통계 초기화</button>
     </div>
 
-    <!-- 편지함 -->
+    <!-- 채팅 -->
     <div id="page-letter" class="page">
-        <div id="letter-list" style="margin-bottom:16px;"></div>
-        <div style="background:white;border-top:1.5px solid #fce4ec;padding-top:14px;">
-            <div style="display:flex;gap:8px;margin-bottom:10px;">
-                <button id="letter-sender-me"   onclick="setSender('me')"   style="flex:1;padding:9px;border-radius:10px;border:1.5px solid #ffb3c6;background:#ff6b9d;color:white;font-size:13px;font-weight:700;cursor:pointer;">나 (돼허니)</button>
-                <button id="letter-sender-miso" onclick="setSender('miso')" style="flex:1;padding:9px;border-radius:10px;border:1.5px solid #fce4ec;background:white;color:#bbb;font-size:13px;font-weight:700;cursor:pointer;">미소</button>
+        <div id="letter-list"></div>
+        <div class="chat-input-wrap">
+            <div class="chat-sender-row">
+                <button id="letter-sender-me"   class="chat-sender-btn active" onclick="setSender('me')">돼허니</button>
+                <button id="letter-sender-miso" class="chat-sender-btn"        onclick="setSender('miso')">미소</button>
             </div>
-            <div style="display:flex;gap:8px;">
-                <textarea id="letter-input" rows="2" placeholder="편지를 써봐 💌"
-                    style="flex:1;padding:12px;border:1.5px solid #fce4ec;border-radius:12px;font-size:15px;font-family:inherit;resize:none;outline:none;line-height:1.6;"></textarea>
-                <button onclick="sendLetter()"
-                    style="padding:0 18px;background:linear-gradient(135deg,#ff6b9d,#ff8fab);color:white;border:none;border-radius:12px;font-size:22px;cursor:pointer;">➤</button>
+            <div class="chat-input-row">
+                <textarea id="letter-input" rows="1" placeholder="메시지 입력..."></textarea>
+                <button class="chat-send-btn" onclick="sendLetter()">➤</button>
             </div>
         </div>
     </div>
@@ -1262,21 +1318,28 @@ function initLetter() {
 function renderLetters(items) {
     const el = document.getElementById('letter-list');
     if (!items.length) {
-        el.innerHTML = `<div class="empty-state"><div class="emoji">💌</div><p>첫 편지를 써봐!</p></div>`;
+        el.innerHTML = `<div style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:#ddd;font-size:14px;padding:40px 0;">💌<br>첫 메시지를 보내봐!</div>`;
         return;
     }
-    el.innerHTML = items.map(item => {
+    el.innerHTML = items.map((item, i) => {
         const info = SENDER_INFO[item.sender] || SENDER_INFO.me;
-        const time = new Date(item.ts).toLocaleString('ko-KR', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
-        return `<div class="bubble-wrap ${item.sender}">
-            <img class="bubble-avatar" src="${info.avatar}" alt="${info.name}">
-            <div class="bubble-content">
-                <span class="bubble-name">${info.name}</span>
-                <div class="bubble">${item.text.replace(/</g,'&lt;')}</div>
-                <div style="display:flex;align-items:center;gap:4px;">
+        const prev = items[i - 1];
+        const next = items[i + 1];
+        const sameAsPrev = prev && prev.sender === item.sender;
+        const sameAsNext = next && next.sender === item.sender;
+        const diffFromPrev = !prev || prev.sender !== item.sender;
+        const time = new Date(item.ts).toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' });
+        const showAvatar = !sameAsNext;
+        const showName  = !sameAsPrev;
+        return `<div class="bubble-wrap ${item.sender}${diffFromPrev ? ' gap' : ''}">
+            <img class="bubble-avatar${showAvatar ? '' : ' hidden'}" src="${info.avatar}" alt="${info.name}">
+            <div class="bubble-col">
+                ${showName ? `<span class="bubble-name">${info.name}</span>` : ''}
+                <div class="bubble">${item.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>
+                ${!sameAsNext ? `<div class="bubble-meta">
                     <span class="bubble-time">${time}</span>
                     <button class="bubble-del" onclick="deleteLetter('${item.key}')">✕</button>
-                </div>
+                </div>` : ''}
             </div>
         </div>`;
     }).join('');
@@ -1289,6 +1352,7 @@ function sendLetter() {
     if (!text || !db) return;
     db.ref('letters').push({ sender: letterSender, text, ts: Date.now() });
     input.value = '';
+    input.style.height = 'auto';
 }
 
 function deleteLetter(key) {
@@ -1296,9 +1360,14 @@ function deleteLetter(key) {
     db.ref('letters/' + key).remove();
 }
 
-// 편지 입력창 Shift+Enter 줄바꿈, Enter 전송
-document.getElementById('letter-input').addEventListener('keydown', e => {
+// 채팅 입력창
+const _letterInput = document.getElementById('letter-input');
+_letterInput.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendLetter(); }
+});
+_letterInput.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 100) + 'px';
 });
 </script>
 </body>
