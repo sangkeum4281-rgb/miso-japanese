@@ -441,6 +441,39 @@
         body.excel-mode .nav-btn span:first-child { display: none !important; }
         body.excel-mode .empty-state .emoji { display: none !important; }
 
+        /* 핑크 잔재 전부 제거 */
+        body.excel-mode,
+        body.excel-mode .app { background: #f0f0f0 !important; }
+        body.excel-mode .page { background: white !important; }
+        body.excel-mode .form-label { color: #1f3864 !important; }
+        body.excel-mode .form-input { border-color: #c8c8c8 !important; }
+        body.excel-mode .form-input:focus { border-color: #217346 !important; }
+        body.excel-mode .divider { border-color: #c8c8c8 !important; }
+        body.excel-mode .progress-bar { background: #e2efda !important; }
+        body.excel-mode .card-furigana { color: #217346 !important; }
+        body.excel-mode .result-score,
+        body.excel-mode .result-fraction,
+        body.excel-mode .result-message { color: #1f3864 !important; }
+        body.excel-mode #stat-progress-text { color: #217346 !important; }
+        body.excel-mode #letter-input:focus { border-color: #217346 !important; }
+        body.excel-mode .section-title { color: #1f3864 !important; }
+        body.excel-mode .word-count { color: #555 !important; }
+        /* 인라인 스타일로 지정된 핑크 버튼들 */
+        body.excel-mode [style*="ff6b9d"],
+        body.excel-mode [style*="ff8fab"],
+        body.excel-mode [style*="ffb3c6"],
+        body.excel-mode [style*="fce4ec"],
+        body.excel-mode [style*="fff0f5"] {
+            background: #e2efda !important;
+            border-color: #c8c8c8 !important;
+            color: #1f3864 !important;
+        }
+        body.excel-mode button[style*="ff6b9d"],
+        body.excel-mode button[style*="ff8fab"] {
+            background: #217346 !important;
+            color: white !important;
+        }
+
         body.excel-mode .ganadi-popup,
         body.excel-mode .confetti-container,
         body.excel-mode #boss-mode { display: none !important; }
