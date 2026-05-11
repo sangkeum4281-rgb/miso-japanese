@@ -199,9 +199,12 @@
 
         #page-letter {
             position: fixed !important;
-            top: 0; left: 0;
-            width: 100%; max-width: 480px;
-            height: 100%; height: 100dvh;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            height: 100dvh;
             display: none; flex-direction: column;
             padding: 0 !important; min-height: 0 !important;
             background: #fdf6f9;
@@ -1365,9 +1368,8 @@ function renderLetters(items) {
             </div>
         </div>`;
     }).join('');
-    el.scrollTop = el.scrollHeight;
-    setTimeout(() => { el.scrollTop = el.scrollHeight; }, 100);
-    setTimeout(() => { el.scrollTop = el.scrollHeight; }, 300);
+    const last = el.lastElementChild;
+    if (last) last.scrollIntoView({ block: 'end' });
 }
 
 function sendLetter() {
@@ -1378,7 +1380,8 @@ function sendLetter() {
     input.value = '';
     input.style.height = 'auto';
     const el = document.getElementById('letter-list');
-    setTimeout(() => { el.scrollTop = el.scrollHeight; }, 50);
+    const last = el.lastElementChild;
+    if (last) last.scrollIntoView({ block: 'end' });
 }
 
 function deleteLetter(key) {
