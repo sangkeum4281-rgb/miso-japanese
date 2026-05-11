@@ -210,8 +210,8 @@
         #letter-list {
             flex: 1; min-height: 0; overflow-y: auto;
             padding: 8px 14px;
-            display: flex; flex-direction: column; gap: 4px;
         }
+        .bubble-wrap { margin-bottom: 4px; }
 
         .chat-input-wrap {
             display: flex; flex-direction: column; gap: 0;
@@ -1359,7 +1359,9 @@ function renderLetters(items) {
             </div>
         </div>`;
     }).join('');
-    setTimeout(() => { el.scrollTop = el.scrollHeight; }, 50);
+    el.scrollTop = el.scrollHeight;
+    setTimeout(() => { el.scrollTop = el.scrollHeight; }, 100);
+    setTimeout(() => { el.scrollTop = el.scrollHeight; }, 300);
 }
 
 function sendLetter() {
@@ -1369,6 +1371,8 @@ function sendLetter() {
     db.ref('letters').push({ sender: letterSender, text, ts: Date.now() });
     input.value = '';
     input.style.height = 'auto';
+    const el = document.getElementById('letter-list');
+    setTimeout(() => { el.scrollTop = el.scrollHeight; }, 50);
 }
 
 function deleteLetter(key) {
