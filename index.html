@@ -401,6 +401,10 @@
         body.excel-mode .stat-number { color: #1f3864 !important; }
         body.excel-mode .progress-fill { background: #217346 !important; }
 
+        body.excel-mode .ganadi-popup,
+        body.excel-mode .confetti-container,
+        body.excel-mode #boss-mode { display: none !important; }
+
 
     </style>
 </head>
@@ -650,6 +654,7 @@ const STUDY_MESSAGES = [
 let studyMsgIndex = 0;
 
 function showGanadiPopup(mood, message) {
+    if (document.body.classList.contains('excel-mode')) return;
     clearTimeout(popupTimer);
     const popup = document.getElementById('ganadi-popup');
     const bubble = document.getElementById('ganadi-bubble');
@@ -1311,6 +1316,7 @@ function showQuizResult() {
 //  Confetti
 // ══════════════════════════════════════════════════════
 function celebrate() {
+    if (document.body.classList.contains('excel-mode')) return;
     const c = document.getElementById('confetti-container');
     const colors = ['#ff6b9d','#ffb3c6','#ffd700','#a78bfa','#67e8f9','#86efac','#fb923c'];
     for (let i = 0; i < 90; i++) {
@@ -1358,6 +1364,7 @@ document.getElementById('header-ganadi-wrap').innerHTML = ganadiSVG('normal', 48
 
 // 특별 사진 → 가나디 팝업과 동일한 방식으로 표시
 function showSpecialPopup(src, message, duration = 2000) {
+    if (document.body.classList.contains('excel-mode')) return;
     clearTimeout(popupTimer);
     const bubble = document.getElementById('ganadi-bubble');
     const svgWrap = document.getElementById('ganadi-popup-svg');
