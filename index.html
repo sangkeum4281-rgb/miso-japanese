@@ -433,6 +433,7 @@
             <div class="chat-sender-row">
                 <button id="letter-sender-me"   class="chat-sender-btn active" onclick="setSender('me')">돼허니</button>
                 <button id="letter-sender-miso" class="chat-sender-btn"        onclick="setSender('miso')">미소</button>
+                <button class="chat-sender-btn" onclick="clearChat()" style="color:#f9a8c9;flex:0.6;">🗑</button>
             </div>
             <div class="chat-input-row">
                 <textarea id="letter-input" rows="1" placeholder="메시지 입력..."></textarea>
@@ -1352,6 +1353,13 @@ function renderLetters(items) {
         </div>`;
     }).join('');
     el.scrollTop = el.scrollHeight;
+}
+
+function clearChat() {
+    if (!confirm('채팅을 전부 삭제할까요?')) return;
+    db.ref('letters').remove();
+    Object.keys(_chatItems).forEach(k => delete _chatItems[k]);
+    document.getElementById('letter-list').innerHTML = '';
 }
 
 function sendLetter() {
