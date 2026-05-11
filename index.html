@@ -1291,6 +1291,7 @@ renderWordList();
 // ══════════════════════════════════════════════════════
 let letterSender = 'me';
 let letterListenerAttached = false;
+const _chatItems = {};
 
 const SENDER_INFO = {
     me:   { name: '돼허니', avatar: 'ganadi_main.png' },
@@ -1316,11 +1317,11 @@ function initLetter() {
     }
     if (letterListenerAttached) return;
     letterListenerAttached = true;
-    db.ref('letters').on('value', snap => {
-        const items = [];
-        snap.forEach(c => items.push({ key: c.key, ...c.val() }));
-        items.sort((a, b) => a.ts - b.ts);
-        renderLetters(items);
+
+    db.ref('letters').on('child_added', snap => {
+        _chatItems[snap.key] = { key: snap.key, ...snap.val() };
+        const sorted = Object.values(_chatItems).sort((a, b) => a.ts - b.ts);
+        renderLetters(sorted);
     });
 }
 
