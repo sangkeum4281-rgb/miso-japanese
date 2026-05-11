@@ -443,6 +443,73 @@
     </div>
 </div>
 
+<!-- 보스 모드 (Esc 위장 화면) -->
+<div id="boss-mode" style="display:none;position:fixed;inset:0;z-index:99999;font-family:'맑은 고딕','Apple SD Gothic Neo',sans-serif;font-size:12px;background:#f0f0f0;">
+
+  <!-- 타이틀바 -->
+  <div style="background:#217346;color:white;padding:4px 12px;display:flex;align-items:center;gap:8px;font-size:12px;">
+    <span style="font-size:16px;">🟩</span>
+    <span style="font-weight:600;">2024년_4분기_부서별예산관리.xlsx - Excel</span>
+    <span style="margin-left:auto;font-size:11px;opacity:.8;">저장됨 ✓</span>
+  </div>
+
+  <!-- 리본 탭 -->
+  <div style="background:#f3f3f3;border-bottom:1px solid #ccc;padding:0 8px;display:flex;gap:0;">
+    <div style="padding:6px 14px;cursor:pointer;font-size:12px;">파일</div>
+    <div style="padding:6px 14px;cursor:pointer;background:white;border:1px solid #ccc;border-bottom:none;font-size:12px;">홈</div>
+    <div style="padding:6px 14px;cursor:pointer;font-size:12px;">삽입</div>
+    <div style="padding:6px 14px;cursor:pointer;font-size:12px;">페이지 레이아웃</div>
+    <div style="padding:6px 14px;cursor:pointer;font-size:12px;">수식</div>
+    <div style="padding:6px 14px;cursor:pointer;font-size:12px;">데이터</div>
+    <div style="padding:6px 14px;cursor:pointer;font-size:12px;">검토</div>
+    <div style="padding:6px 14px;cursor:pointer;font-size:12px;">보기</div>
+  </div>
+
+  <!-- 리본 버튼들 -->
+  <div style="background:white;border-bottom:1px solid #ccc;padding:4px 12px;display:flex;align-items:center;gap:12px;height:56px;">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;border-right:1px solid #ddd;">
+      <span style="font-size:20px;">📋</span><span style="font-size:10px;">붙여넣기</span>
+    </div>
+    <div style="display:flex;gap:8px;font-size:11px;color:#555;padding-right:8px;border-right:1px solid #ddd;">
+      <span style="cursor:pointer;font-weight:bold;">B</span>
+      <span style="cursor:pointer;font-style:italic;">I</span>
+      <span style="cursor:pointer;text-decoration:underline;">U</span>
+    </div>
+    <div style="display:flex;gap:8px;font-size:11px;color:#555;">
+      <span>맑은 고딕</span><span style="color:#bbb;">▼</span>
+      <span style="border:1px solid #ddd;padding:0 4px;">11</span><span style="color:#bbb;">▼</span>
+    </div>
+  </div>
+
+  <!-- 수식 입력줄 -->
+  <div style="background:white;border-bottom:1px solid #ccc;padding:3px 8px;display:flex;align-items:center;gap:8px;">
+    <div style="border:1px solid #ccc;padding:2px 6px;min-width:60px;text-align:center;font-size:11px;">D14</div>
+    <span style="color:#999;">✕</span><span style="color:#999;">✓</span><span style="color:#217346;font-size:14px;font-weight:bold;">ƒx</span>
+    <div style="flex:1;border:1px solid #ccc;padding:2px 8px;font-size:12px;">=SUM(D5:D13)</div>
+  </div>
+
+  <!-- 그리드 -->
+  <div style="overflow:auto;flex:1;height:calc(100vh - 168px);">
+    <table style="border-collapse:collapse;width:100%;background:white;">
+      <thead>
+        <tr style="background:#f3f3f3;">
+          <th style="width:36px;border:1px solid #d0d0d0;padding:3px;"></th>
+          ${['A','B','C','D','E','F','G','H','I','J'].map(c=>`<th style="min-width:90px;border:1px solid #d0d0d0;padding:3px;font-weight:normal;text-align:center;color:#333;">${c}</th>`).join('')}
+        </tr>
+      </thead>
+      <tbody id="boss-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- 시트 탭 -->
+  <div style="position:fixed;bottom:0;left:0;right:0;background:#f3f3f3;border-top:1px solid #ccc;padding:3px 8px;display:flex;align-items:center;gap:4px;font-size:11px;">
+    <span style="padding:3px 12px;background:white;border:1px solid #ccc;border-bottom:none;cursor:pointer;">4분기예산</span>
+    <span style="padding:3px 12px;cursor:pointer;color:#999;">3분기실적</span>
+    <span style="padding:3px 12px;cursor:pointer;color:#999;">연간계획</span>
+    <span style="margin-left:auto;color:#888;">준비</span>
+  </div>
+</div>
+
 <!-- 가나디 팝업 (전역) -->
 <div class="ganadi-popup" id="ganadi-popup">
     <div class="ganadi-bubble" id="ganadi-bubble"></div>
@@ -1384,6 +1451,66 @@ _letterInput.addEventListener('keydown', e => {
 _letterInput.addEventListener('input', function() {
     this.style.height = 'auto';
     this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+});
+
+// ══════════════════════════════════════════════════════
+//  보스 모드 (Esc 위장 화면)
+// ══════════════════════════════════════════════════════
+const BOSS_DATA = [
+    ['','','','','','','','','',''],
+    ['','2024년 4분기 부서별 예산 관리표','','','','','','','',''],
+    ['','','','','','','','','',''],
+    ['','부서','팀장','예산(천원)','집행액(천원)','잔액(천원)','집행률(%)','비고','',''],
+    ['','영업1팀','김민준','42,500','38,200','4,300','89.9%','정상','',''],
+    ['','영업2팀','이서연','38,000','31,450','6,550','82.8%','정상','',''],
+    ['','마케팅팀','박지호','55,000','52,100','2,900','94.7%','주의','',''],
+    ['','개발팀','최수아','71,200','68,900','2,300','96.8%','주의','',''],
+    ['','인사팀','정태양','28,000','19,600','8,400','70.0%','정상','',''],
+    ['','재무팀','강나연','33,500','28,750','4,750','85.8%','정상','',''],
+    ['','총무팀','윤도현','24,800','22,100','2,700','89.1%','정상','',''],
+    ['','고객지원','임하은','31,000','27,800','3,200','89.7%','정상','',''],
+    ['','기획팀','오승민','29,500','25,400','4,100','86.1%','정상','',''],
+    ['','합계','','353,500','314,300','39,200','88.9%','','',''],
+    ['','','','','','','','','',''],
+    ['','* 집행률 95% 초과 시 추가예산 신청 가능','','','','','','','',''],
+    ['','* 최종 마감: 2024-12-31','','','','','','','',''],
+];
+
+function buildBossTable() {
+    const tbody = document.getElementById('boss-tbody');
+    if (!tbody || tbody.children.length) return;
+    BOSS_DATA.forEach((row, r) => {
+        const tr = document.createElement('tr');
+        const th = document.createElement('th');
+        th.style.cssText = 'background:#f3f3f3;border:1px solid #d0d0d0;padding:3px 6px;text-align:center;color:#555;font-weight:normal;font-size:11px;';
+        th.textContent = r + 1;
+        tr.appendChild(th);
+        row.forEach((cell, c) => {
+            const td = document.createElement('td');
+            const isHeader = r === 3;
+            const isTotal  = r === 13;
+            const isWarn   = (c === 6) && ['94.7%','96.8%'].includes(cell);
+            td.style.cssText = `border:1px solid #d0d0d0;padding:3px 6px;min-width:90px;white-space:nowrap;` +
+                (isHeader ? 'background:#e2efda;font-weight:bold;text-align:center;' : '') +
+                (isTotal  ? 'background:#fff2cc;font-weight:bold;' : '') +
+                (isWarn   ? 'color:#c00;font-weight:bold;' : '') +
+                (c > 2 && r >= 4 && r <= 12 ? 'text-align:right;' : '');
+            if (r === 1 && c === 1) td.style.cssText += 'font-size:14px;font-weight:bold;color:#1f3864;';
+            td.textContent = cell;
+            tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+    });
+}
+
+let bossMode = false;
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        bossMode = !bossMode;
+        const boss = document.getElementById('boss-mode');
+        boss.style.display = bossMode ? 'block' : 'none';
+        if (bossMode) buildBossTable();
+    }
 });
 </script>
 </body>
