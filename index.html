@@ -195,27 +195,21 @@
         .empty-state p { font-size: 16px; line-height: 1.6; }
 
         /* Chat */
-        .header { position: relative; z-index: 101; }
-
         #page-letter {
-            position: fixed !important;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 480px;
-            height: 100dvh;
-            display: none; flex-direction: column;
-            padding: 0 !important; min-height: 0 !important;
+            padding: 0 !important;
+            min-height: 0 !important;
+            display: none;
+            flex-direction: column;
             background: #fdf6f9;
-            z-index: 50;
+            overflow: hidden;
         }
-        #page-letter.active { display: flex; }
+        #page-letter.active { display: flex !important; }
 
         #letter-list {
-            flex: 1; min-height: 0;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             padding: 8px 14px;
+            box-sizing: border-box;
         }
 
         .chat-input-wrap {
@@ -1311,9 +1305,13 @@ function setSender(who) {
 }
 
 function setLetterHeight() {
-    const topH = document.querySelector('.header').offsetHeight
-               + document.querySelector('.nav').offsetHeight;
-    document.getElementById('letter-list').style.paddingTop = (topH + 8) + 'px';
+    const topH    = document.querySelector('.header').offsetHeight
+                  + document.querySelector('.nav').offsetHeight;
+    const inputH  = document.querySelector('.chat-input-wrap').offsetHeight;
+    const listH   = window.innerHeight - topH - inputH;
+    const list    = document.getElementById('letter-list');
+    list.style.height    = listH + 'px';
+    list.style.maxHeight = listH + 'px';
 }
 
 function initLetter() {
