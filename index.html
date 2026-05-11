@@ -194,6 +194,30 @@
         .empty-state .emoji { font-size: 64px; margin-bottom: 14px; }
         .empty-state p { font-size: 16px; line-height: 1.6; }
 
+        /* Letter chat */
+        #page-letter { display: none; flex-direction: column; padding: 16px 16px 0; }
+        #page-letter.active { display: flex; }
+        #letter-list { flex: 1; overflow-y: auto; padding-bottom: 8px; }
+
+        .bubble-wrap { display: flex; margin-bottom: 12px; gap: 8px; }
+        .bubble-wrap.me   { flex-direction: row-reverse; }
+        .bubble-wrap.miso { flex-direction: row; }
+
+        .bubble-avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; flex-shrink: 0; align-self: flex-end; }
+        .bubble-content { max-width: 72%; display: flex; flex-direction: column; gap: 4px; }
+        .bubble-wrap.me   .bubble-content { align-items: flex-end; }
+        .bubble-wrap.miso .bubble-content { align-items: flex-start; }
+
+        .bubble-name { font-size: 11px; color: #bbb; }
+        .bubble {
+            padding: 11px 14px; border-radius: 18px;
+            font-size: 15px; line-height: 1.65; white-space: pre-wrap; word-break: break-all;
+        }
+        .bubble-wrap.me   .bubble { background: #ff6b9d; color: white; border-bottom-right-radius: 4px; }
+        .bubble-wrap.miso .bubble { background: #f5f5f5; color: #333; border-bottom-left-radius: 4px; }
+        .bubble-time { font-size: 10px; color: #ccc; }
+        .bubble-del { background: none; border: none; font-size: 12px; color: #ddd; cursor: pointer; padding: 0 2px; }
+
         /* Confetti */
         .confetti-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
         .confetti { position: absolute; animation: confetti-fall linear forwards; }
@@ -270,6 +294,7 @@
         <button class="nav-btn" data-page="study"    onclick="showPage('study',this)">   <span>📚</span><span>학습</span></button>
         <button class="nav-btn" data-page="quiz"     onclick="showPage('quiz',this)">    <span>🎯</span><span>퀴즈</span></button>
         <button class="nav-btn" data-page="stats"    onclick="showPage('stats',this)">   <span>📊</span><span>통계</span></button>
+        <button class="nav-btn" data-page="letter"   onclick="showPage('letter',this)">  <span>💌</span><span>편지</span></button>
     </nav>
 
     <!-- 단어장 -->
@@ -337,6 +362,23 @@
         </div>
         <button class="btn-primary" onclick="resetStats()" style="background:linear-gradient(135deg,#bbb,#ccc);">통계 초기화</button>
     </div>
+
+    <!-- 편지함 -->
+    <div id="page-letter" class="page">
+        <div id="letter-list" style="margin-bottom:16px;"></div>
+        <div style="background:white;border-top:1.5px solid #fce4ec;padding-top:14px;">
+            <div style="display:flex;gap:8px;margin-bottom:10px;">
+                <button id="letter-sender-me"   onclick="setSender('me')"   style="flex:1;padding:9px;border-radius:10px;border:1.5px solid #ffb3c6;background:#ff6b9d;color:white;font-size:13px;font-weight:700;cursor:pointer;">나 (가나디)</button>
+                <button id="letter-sender-miso" onclick="setSender('miso')" style="flex:1;padding:9px;border-radius:10px;border:1.5px solid #fce4ec;background:white;color:#bbb;font-size:13px;font-weight:700;cursor:pointer;">미소</button>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <textarea id="letter-input" rows="2" placeholder="편지를 써봐 💌"
+                    style="flex:1;padding:12px;border:1.5px solid #fce4ec;border-radius:12px;font-size:15px;font-family:inherit;resize:none;outline:none;line-height:1.6;"></textarea>
+                <button onclick="sendLetter()"
+                    style="padding:0 18px;background:linear-gradient(135deg,#ff6b9d,#ff8fab);color:white;border:none;border-radius:12px;font-size:22px;cursor:pointer;">➤</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- 가나디 팝업 (전역) -->
@@ -348,6 +390,30 @@
 
 
 <div class="confetti-container" id="confetti-container"></div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  Firebase 설정 (본인 프로젝트 값으로 교체)
+// ══════════════════════════════════════════════════════
+const FIREBASE_CONFIG = {
+    apiKey:            "YOUR_API_KEY",
+    authDomain:        "YOUR_PROJECT.firebaseapp.com",
+    databaseURL:       "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+    projectId:         "YOUR_PROJECT",
+    storageBucket:     "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId:             "YOUR_APP_ID"
+};
+let db = null;
+try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.database();
+} catch(e) {}
+</script>
 
 <script>
 // ══════════════════════════════════════════════════════
@@ -719,6 +785,7 @@ function showPage(name, btn) {
     if (name === 'study')    initStudy();
     if (name === 'quiz')     initQuiz();
     if (name === 'stats')    renderStats();
+    if (name === 'letter')   initLetter();
 }
 
 // ══════════════════════════════════════════════════════
@@ -1157,6 +1224,82 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 renderWordList();
+
+// ══════════════════════════════════════════════════════
+//  편지함
+// ══════════════════════════════════════════════════════
+let letterSender = 'me';
+let letterListenerAttached = false;
+
+const SENDER_INFO = {
+    me:   { name: '가나디', avatar: 'ganadi_main.png' },
+    miso: { name: '미소',   avatar: 'girl_merong.jpg'  },
+};
+
+function setSender(who) {
+    letterSender = who;
+    document.getElementById('letter-sender-me').style.background   = who === 'me'   ? '#ff6b9d' : 'white';
+    document.getElementById('letter-sender-me').style.color        = who === 'me'   ? 'white'   : '#bbb';
+    document.getElementById('letter-sender-miso').style.background = who === 'miso' ? '#ff6b9d' : 'white';
+    document.getElementById('letter-sender-miso').style.color      = who === 'miso' ? 'white'   : '#bbb';
+}
+
+function initLetter() {
+    if (!db) {
+        document.getElementById('letter-list').innerHTML =
+            `<div class="empty-state"><div class="emoji">⚠️</div><p>Firebase 설정이 필요해요.<br>코드 상단 FIREBASE_CONFIG를 채워주세요!</p></div>`;
+        return;
+    }
+    if (letterListenerAttached) return;
+    letterListenerAttached = true;
+    db.ref('letters').orderByChild('ts').on('value', snap => {
+        const items = [];
+        snap.forEach(c => items.push({ key: c.key, ...c.val() }));
+        renderLetters(items);
+    });
+}
+
+function renderLetters(items) {
+    const el = document.getElementById('letter-list');
+    if (!items.length) {
+        el.innerHTML = `<div class="empty-state"><div class="emoji">💌</div><p>첫 편지를 써봐!</p></div>`;
+        return;
+    }
+    el.innerHTML = items.map(item => {
+        const info = SENDER_INFO[item.sender] || SENDER_INFO.me;
+        const time = new Date(item.ts).toLocaleString('ko-KR', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
+        return `<div class="bubble-wrap ${item.sender}">
+            <img class="bubble-avatar" src="${info.avatar}" alt="${info.name}">
+            <div class="bubble-content">
+                <span class="bubble-name">${info.name}</span>
+                <div class="bubble">${item.text.replace(/</g,'&lt;')}</div>
+                <div style="display:flex;align-items:center;gap:4px;">
+                    <span class="bubble-time">${time}</span>
+                    <button class="bubble-del" onclick="deleteLetter('${item.key}')">✕</button>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+    el.scrollTop = el.scrollHeight;
+}
+
+function sendLetter() {
+    const input = document.getElementById('letter-input');
+    const text = input.value.trim();
+    if (!text || !db) return;
+    db.ref('letters').push({ sender: letterSender, text, ts: Date.now() });
+    input.value = '';
+}
+
+function deleteLetter(key) {
+    if (!db) return;
+    db.ref('letters/' + key).remove();
+}
+
+// 편지 입력창 Shift+Enter 줄바꿈, Enter 전송
+document.getElementById('letter-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendLetter(); }
+});
 </script>
 </body>
 </html>
