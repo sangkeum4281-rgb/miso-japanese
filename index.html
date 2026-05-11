@@ -198,18 +198,19 @@
         #page-letter {
             padding: 0 !important;
             min-height: 0 !important;
+            height: calc(100vh - 137px) !important;
             display: none;
             flex-direction: column;
             background: #fdf6f9;
-            overflow: hidden;
         }
         #page-letter.active { display: flex !important; }
 
         #letter-list {
+            flex: 1;
+            min-height: 0;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
             padding: 8px 14px;
-            box-sizing: border-box;
         }
 
         .chat-input-wrap {
@@ -1304,15 +1305,7 @@ function setSender(who) {
     document.getElementById('letter-sender-miso').style.color      = who === 'miso' ? 'white'   : '#bbb';
 }
 
-function setLetterHeight() {
-    const topH    = document.querySelector('.header').offsetHeight
-                  + document.querySelector('.nav').offsetHeight;
-    const inputH  = document.querySelector('.chat-input-wrap').offsetHeight;
-    const listH   = window.innerHeight - topH - inputH;
-    const list    = document.getElementById('letter-list');
-    list.style.height    = listH + 'px';
-    list.style.maxHeight = listH + 'px';
-}
+function setLetterHeight() {}
 
 function initLetter() {
     setLetterHeight();
@@ -1334,42 +1327,29 @@ window.addEventListener('resize', () => {
     if (document.getElementById('page-letter').classList.contains('active')) setLetterHeight();
 });
 
-let _renderedKeys = new Set();
-
 function renderLetters(items) {
     const el = document.getElementById('letter-list');
-
     if (!items.length) {
         el.innerHTML = `<div style="text-align:center;color:#ddd;padding:40px 0;font-size:14px;">💌<br>첫 메시지를 보내봐!</div>`;
-        _renderedKeys.clear();
         return;
     }
-
-    // 삭제 등으로 DB 줄어들면 전체 다시 그리기
-    if (items.length < _renderedKeys.size) {
-        el.innerHTML = '';
-        _renderedKeys.clear();
-    }
-
-    // 새 메시지만 추가 (기존 것은 건드리지 않음)
-    items.forEach(item => {
-        if (_renderedKeys.has(item.key)) return;
-        _renderedKeys.add(item.key);
-
+    el.innerHTML = items.map((item, i) => {
         const info = SENDER_INFO[item.sender] || SENDER_INFO.me;
+        const prev = items[i - 1];
+        const next = items[i + 1];
+        const samePrev = prev && prev.sender === item.sender;
+        const sameNext = next && next.sender === item.sender;
         const time = new Date(item.ts).toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' });
-        const div  = document.createElement('div');
-        div.className = `bubble-wrap ${item.sender}`;
-        div.innerHTML = `
-            <img class="bubble-avatar" src="${info.avatar}" alt="${info.name}">
+        return `<div class="bubble-wrap ${item.sender}${!samePrev && prev ? ' gap' : ''}">
+            <img class="bubble-avatar${sameNext ? ' hidden' : ''}" src="${info.avatar}" alt="${info.name}">
             <div class="bubble-col">
-                <span class="bubble-name">${info.name}</span>
+                ${!samePrev ? `<span class="bubble-name">${info.name}</span>` : ''}
                 <div class="bubble">${item.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>
-                <div class="bubble-meta"><span class="bubble-time">${time}</span></div>
-            </div>`;
-        el.appendChild(div);
-    });
-
+                ${!sameNext ? `<div class="bubble-meta"><span class="bubble-time">${time}</span></div>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+    void el.offsetHeight;
     el.scrollTop = el.scrollHeight;
 }
 
