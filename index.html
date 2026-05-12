@@ -1062,7 +1062,6 @@ if (!words) {
     words = RAW_DEFAULT.map(([korean, jpRaw]) => ({
         ...parseJapanese(jpRaw), korean, memorized: false
     }));
-    saveWords();
 }
 let stats  = JSON.parse(localStorage.getItem('miso_stats')  || '{"quizzes":0,"bestScore":0}');
 let currentFilter = 'all';
@@ -1070,8 +1069,36 @@ let currentFilter = 'all';
 let studyWords = [], studyIndex = 0, studyFlipped = false;
 let quizWords  = [], quizIndex  = 0, quizCorrect  = 0, quizAnswered = false;
 
-function saveWords()  { localStorage.setItem('miso_words',  JSON.stringify(words)); }
-function saveStats()  { localStorage.setItem('miso_stats',  JSON.stringify(stats)); }
+function saveWords() {
+    localStorage.setItem('miso_words', JSON.stringify(words));
+    if (db) db.ref('words').set(words);
+}
+function saveStats() {
+    localStorage.setItem('miso_stats', JSON.stringify(stats));
+    if (db) db.ref('stats').set(stats);
+}
+
+// Firebase에서 단어/통계 불러오기 (다른 기기에서 수정된 경우 반영)
+if (db) {
+    db.ref('words').once('value').then(snap => {
+        const fbWords = snap.val();
+        if (fbWords && Array.isArray(fbWords)) {
+            words = fbWords;
+            localStorage.setItem('miso_words', JSON.stringify(words));
+            renderWordList();
+        } else {
+            // Firebase에 없으면 현재 로컬 데이터 올리기
+            db.ref('words').set(words);
+        }
+    });
+    db.ref('stats').once('value').then(snap => {
+        const fbStats = snap.val();
+        if (fbStats) {
+            stats = fbStats;
+            localStorage.setItem('miso_stats', JSON.stringify(stats));
+        }
+    });
+}
 
 // ══════════════════════════════════════════════════════
 //  Navigation
