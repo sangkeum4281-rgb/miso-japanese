@@ -514,6 +514,7 @@
         <button class="nav-btn" data-page="quiz"     onclick="showPage('quiz',this)">    <span>🎯</span><span>퀴즈</span></button>
         <button class="nav-btn" data-page="stats"    onclick="showPage('stats',this)">   <span>📊</span><span>통계</span></button>
         <button class="nav-btn" data-page="letter"   onclick="showPage('letter',this)">  <span>💌</span><span>편지</span></button>
+        <button class="nav-btn" data-page="jump"     onclick="showPage('jump',this)">    <span>🐾</span><span>점프</span></button>
     </nav>
 
     <!-- 단어장 -->
@@ -580,6 +581,11 @@
             <div style="font-size:13px;color:#ff6b9d;font-weight:700;" id="stat-progress-text">0 / 0</div>
         </div>
         <button class="btn-primary" onclick="resetStats()" style="background:linear-gradient(135deg,#bbb,#ccc);">통계 초기화</button>
+    </div>
+
+    <!-- 가나디 점프 -->
+    <div id="page-jump" class="page" style="padding:0;display:none;flex-direction:column;align-items:center;background:#e8f4fd;">
+        <canvas id="jump-canvas" style="display:block;max-width:100%;"></canvas>
     </div>
 
     <!-- 채팅 -->
@@ -1078,6 +1084,8 @@ function showPage(name, btn) {
     if (name === 'quiz')     initQuiz();
     if (name === 'stats')    renderStats();
     if (name === 'letter')   initLetter();
+    if (name === 'jump')     initJump();
+    else                     stopJump();
 }
 
 // ══════════════════════════════════════════════════════
@@ -1664,6 +1672,202 @@ _letterInput.addEventListener('input', function() {
     this.style.height = 'auto';
     this.style.height = Math.min(this.scrollHeight, 100) + 'px';
 });
+
+// ══════════════════════════════════════════════════════
+//  가나디 점프
+// ══════════════════════════════════════════════════════
+let jumpRAF = null, jumpRunning = false;
+
+function stopJump() {
+    if (jumpRAF) { cancelAnimationFrame(jumpRAF); jumpRAF = null; }
+    jumpRunning = false;
+}
+
+function initJump() {
+    stopJump();
+    const page   = document.getElementById('page-jump');
+    const canvas = document.getElementById('jump-canvas');
+    const W = Math.min(window.innerWidth, 480);
+    const H = window.innerHeight - document.querySelector('.header').offsetHeight - document.querySelector('.nav').offsetHeight;
+    canvas.width  = W;
+    canvas.height = H;
+    page.style.height = H + 'px';
+
+    const ctx = canvas.getContext('2d');
+
+    // 이미지 로드
+    const gImg = new Image(); gImg.src = 'ganadi_main.png';
+    const sadImg = new Image(); sadImg.src = 'ganadi_sad.png';
+
+    // 상태
+    const GAP  = 160, PIPE_W = 52, SPEED0 = 2.5;
+    let bird, pipes, score, best, phase, frameCount, speed;
+
+    function reset() {
+        bird  = { x: W * 0.25, y: H * 0.4, vy: 0, r: 22 };
+        pipes = [];
+        score = 0; frameCount = 0; speed = SPEED0;
+        phase = 'ready'; // ready → playing → dead
+    }
+    reset();
+
+    // Firebase 최고점
+    best = parseInt(localStorage.getItem('jump_best') || '0');
+
+    function jump() {
+        if (phase === 'ready') { phase = 'playing'; return; }
+        if (phase === 'playing') bird.vy = -7.5;
+        if (phase === 'dead') { reset(); }
+    }
+
+    canvas.addEventListener('click',      jump);
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); jump(); }, { passive: false });
+
+    function addPipe() {
+        const minH = 60, maxH = H - GAP - minH;
+        const topH = minH + Math.random() * (maxH - minH);
+        pipes.push({ x: W, topH });
+    }
+
+    function drawRoundRect(x, y, w, h, r, fill) {
+        ctx.beginPath();
+        ctx.roundRect(x, y, w, h, r);
+        ctx.fillStyle = fill;
+        ctx.fill();
+    }
+
+    function drawPipe(p) {
+        // 위 파이프
+        drawRoundRect(p.x, 0, PIPE_W, p.topH, [0,0,8,8], '#4caf50');
+        drawRoundRect(p.x - 4, p.topH - 20, PIPE_W + 8, 20, 8, '#388e3c');
+        // 아래 파이프
+        const botY = p.topH + GAP;
+        drawRoundRect(p.x, botY, PIPE_W, H - botY, [8,8,0,0], '#4caf50');
+        drawRoundRect(p.x - 4, botY, PIPE_W + 8, 20, 8, '#388e3c');
+    }
+
+    function drawBird(img) {
+        ctx.save();
+        const tilt = Math.min(Math.max(bird.vy * 3, -30), 70);
+        ctx.translate(bird.x, bird.y);
+        ctx.rotate(tilt * Math.PI / 180);
+        const s = bird.r * 2.2;
+        ctx.drawImage(img, -s/2, -s/2, s, s);
+        ctx.restore();
+    }
+
+    function drawBg() {
+        // 하늘
+        const sky = ctx.createLinearGradient(0, 0, 0, H);
+        sky.addColorStop(0, '#87ceeb');
+        sky.addColorStop(1, '#c8e6f5');
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, W, H);
+        // 땅
+        ctx.fillStyle = '#8bc34a';
+        ctx.fillRect(0, H - 30, W, 30);
+        ctx.fillStyle = '#558b2f';
+        ctx.fillRect(0, H - 30, W, 6);
+    }
+
+    function drawHUD() {
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 36px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = 'rgba(0,0,0,0.3)';
+        ctx.shadowBlur = 4;
+        ctx.fillText(score, W / 2, 60);
+        ctx.shadowBlur = 0;
+    }
+
+    function drawReady() {
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 28px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('가나디 점프! 🐾', W/2, H/2 - 40);
+        ctx.font = '18px sans-serif';
+        ctx.fillText('탭해서 시작', W/2, H/2 + 4);
+        ctx.font = '14px sans-serif';
+        ctx.fillStyle = '#ffd700';
+        ctx.fillText(`최고 기록: ${best}점`, W/2, H/2 + 36);
+    }
+
+    function drawDead() {
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 26px sans-serif';
+        ctx.fillText('💀 게임 오버', W/2, H/2 - 50);
+        ctx.font = 'bold 40px sans-serif';
+        ctx.fillStyle = '#ffd700';
+        ctx.fillText(score + '점', W/2, H/2 + 4);
+        ctx.font = '16px sans-serif';
+        ctx.fillStyle = 'white';
+        ctx.fillText(`최고 기록: ${best}점`, W/2, H/2 + 40);
+        ctx.font = '14px sans-serif';
+        ctx.fillStyle = '#ddd';
+        ctx.fillText('탭해서 다시 시작', W/2, H/2 + 72);
+    }
+
+    function tick() {
+        if (!jumpRunning) return;
+        jumpRAF = requestAnimationFrame(tick);
+        frameCount++;
+        drawBg();
+
+        if (phase === 'playing') {
+            // 중력
+            bird.vy += 0.38;
+            bird.y  += bird.vy;
+            speed    = SPEED0 + score * 0.04;
+
+            // 파이프 생성
+            if (frameCount % Math.max(70, 110 - score * 2) === 0) addPipe();
+
+            // 파이프 이동 & 점수
+            pipes.forEach(p => {
+                p.x -= speed;
+                if (!p.passed && p.x + PIPE_W < bird.x) {
+                    p.passed = true; score++;
+                    if (score > best) {
+                        best = score;
+                        localStorage.setItem('jump_best', best);
+                        if (db) db.ref(`jump_best/${letterSender}`).set(best);
+                    }
+                }
+            });
+            pipes = pipes.filter(p => p.x + PIPE_W > 0);
+
+            // 충돌
+            const dead =
+                bird.y - bird.r < 0 ||
+                bird.y + bird.r > H - 30 ||
+                pipes.some(p =>
+                    bird.x + bird.r > p.x + 6 &&
+                    bird.x - bird.r < p.x + PIPE_W - 6 &&
+                    (bird.y - bird.r < p.topH || bird.y + bird.r > p.topH + GAP)
+                );
+            if (dead) phase = 'dead';
+        }
+
+        pipes.forEach(drawPipe);
+
+        if (phase === 'dead') {
+            drawBird(sadImg);
+            drawDead();
+        } else {
+            drawBird(gImg);
+            if (phase === 'playing') drawHUD();
+            if (phase === 'ready')   drawReady();
+        }
+    }
+
+    jumpRunning = true;
+    jumpRAF = requestAnimationFrame(tick);
+}
 
 // ══════════════════════════════════════════════════════
 //  엑셀 모드 토글
