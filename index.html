@@ -1711,11 +1711,10 @@ function initJump() {
     // ── 상수 ────────────────────────────────────
     const GROUND  = H - 60;
     const CHAR_X  = 80;
-    const CHAR_H_RUN   = 72;
-    const CHAR_H_SLIDE = 40;
-    const SPEED0  = 4;
-    const GRAVITY = 0.55;
-    const JUMP_V  = -13;
+    const CHAR_SIZE = 68;
+    const SPEED0    = 4;
+    const GRAVITY   = 0.75;
+    const JUMP_V    = -11;
 
     // ── 상태 ────────────────────────────────────
     let phase, score, best, speed, frameCount;
@@ -1785,9 +1784,12 @@ function initJump() {
         const [arr, idx] = getSpr();
         const img = arr[idx];
         if (!img.complete) return;
-        const h = isSliding ? CHAR_H_SLIDE : CHAR_H_RUN;
-        const w = h * (img.naturalWidth / (img.naturalHeight || 1) || 1);
-        const y = isSliding ? GROUND - CHAR_H_SLIDE : charY - CHAR_H_RUN;
+        const ratio = img.naturalWidth / (img.naturalHeight || 1) || 1;
+        // 모든 상태에서 동일한 기준 크기(CHAR_SIZE) 유지
+        let w, h;
+        if (ratio >= 1) { w = CHAR_SIZE; h = CHAR_SIZE / ratio; }
+        else            { h = CHAR_SIZE; w = CHAR_SIZE * ratio; }
+        const y = isSliding ? GROUND - h : charY - h;
         ctx.drawImage(img, CHAR_X - w / 2, y, w, h);
     }
 
@@ -1852,9 +1854,9 @@ function initJump() {
 
     // ── 충돌 ────────────────────────────────────
     function collides(o) {
-        const cx = CHAR_X, cy = isSliding ? GROUND - CHAR_H_SLIDE / 2 : charY - CHAR_H_RUN / 2;
-        const ch = (isSliding ? CHAR_H_SLIDE : CHAR_H_RUN) * 0.65;
-        const cw = 28;
+        const cx = CHAR_X, cy = isSliding ? GROUND - CHAR_SIZE * 0.3 : charY - CHAR_SIZE * 0.5;
+        const ch = CHAR_SIZE * 0.6;
+        const cw = CHAR_SIZE * 0.4;
         return cx + cw/2 > o.x + 4 && cx - cw/2 < o.x + o.w - 4 &&
                cy + ch/2 > o.y + 4 && cy - ch/2 < o.y + o.h - 4;
     }
