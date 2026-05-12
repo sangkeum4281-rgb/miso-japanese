@@ -1691,7 +1691,7 @@ function initJump() {
     const page   = document.getElementById('page-jump');
     const topH   = document.querySelector('.header').offsetHeight + document.querySelector('.nav').offsetHeight;
     const W = Math.min(window.innerWidth, 480);
-    const H = window.innerHeight - topH;
+    const H = Math.min(window.innerHeight - topH, 340);
     canvas.width  = W;
     canvas.height = H;
     page.style.height = H + 'px';
@@ -1769,8 +1769,8 @@ function initJump() {
         const r  = type === 'bar' ? 26 + Math.random() * 8 : 0; // 축구공 반지름
         const w  = type === 'bar' ? r * 2 : 28 + Math.random() * 20;
         const h  = type === 'bar' ? r * 2 : 48 + Math.random() * 24;
-        // 축구공: 슬라이드로 피할 수 있는 허리~가슴 높이
-        const y  = type === 'bar' ? GROUND - CHAR_SIZE * 0.65 - r : GROUND - h;
+        // 축구공: 슬라이드 시 머리 위로 지나가는 높이
+        const y  = type === 'bar' ? GROUND - CHAR_SIZE * 0.45 - r * 2 : GROUND - h;
         obstacles.push({ x: W + 20, y, w, h, type, passed: false });
     }
 
@@ -1879,12 +1879,13 @@ function initJump() {
         const alpha = Math.min((deadFrame - FADE_START) / FADE_DUR, 1);
         if (!sadEndImg.complete || !alpha) return;
         ctx.globalAlpha = alpha;
-        // 이미지를 화면 전체에 cover 스타일로
-        const iR = sadEndImg.naturalWidth / sadEndImg.naturalHeight;
-        const cR = W / H;
-        let sw, sh, sx, sy;
-        if (iR > cR) { sh = H; sw = H * iR; sx = (W - sw) / 2; sy = 0; }
-        else         { sw = W; sh = W / iR; sx = 0; sy = (H - sh) / 2; }
+        // 이미지를 화면 중앙에 60% 크기로
+        const maxW = W * 0.6;
+        const iR   = sadEndImg.naturalWidth / (sadEndImg.naturalHeight || 1);
+        const sw   = maxW;
+        const sh   = maxW / iR;
+        const sx   = (W - sw) / 2;
+        const sy   = (H - sh) / 2;
         ctx.drawImage(sadEndImg, sx, sy, sw, sh);
         ctx.globalAlpha = 1;
     }
@@ -1903,8 +1904,9 @@ function initJump() {
 
     // ── 충돌 ────────────────────────────────────
     function collides(o) {
-        const cx = CHAR_X, cy = isSliding ? GROUND - CHAR_SIZE * 0.3 : charY - CHAR_SIZE * 0.5;
-        const ch = CHAR_SIZE * 0.6;
+        const cx = CHAR_X;
+        const cy = isSliding ? GROUND - CHAR_SIZE * 0.18 : charY - CHAR_SIZE * 0.5;
+        const ch = isSliding ? CHAR_SIZE * 0.35 : CHAR_SIZE * 0.6;
         const cw = CHAR_SIZE * 0.4;
         return cx + cw/2 > o.x + 4 && cx - cw/2 < o.x + o.w - 4 &&
                cy + ch/2 > o.y + 4 && cy - ch/2 < o.y + o.h - 4;
