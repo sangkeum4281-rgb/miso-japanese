@@ -1702,11 +1702,11 @@ function initJump() {
     // ── 스프라이트 로드 ──────────────────────────
     function loadImgs(srcs) { return srcs.map(s => { const i = new Image(); i.src = s; return i; }); }
     const SPR = {
-        idle:  loadImgs(['normal1.png','normal2.png']),
-        run:   loadImgs(['walk1.png','walk2.png','walk3.png','walk4.png','walk5.png','walk6.png']),
-        jump:  loadImgs(['jump1.png','jump2.png','jump3.png','jump4.png','jump5.png','jump6.png']),
-        slide: loadImgs(['slide1.png','slide2.png','slide3.png','slide4.png','slide5.png','slide6.png']),
-        dead:  loadImgs(['end1.png','end2.png','end3.png','end4.png','end5.png','end6.png']),
+        idle:  loadImgs(['normal 1.png','normal 2.png']),
+        run:   loadImgs(['run 1.png','run 2.png','run 3.png','run 4.png','run 5.png','run 6.png']),
+        jump:  loadImgs(['jump 1.png','jump 2.png','jump 3.png','jump 4.png','jump 5.png','jump 6.png']),
+        slide: loadImgs(['slide 1.png','slide 2.png','slide 3.png','slide 4.png','slide 5.png','slide 6.png']),
+        dead:  loadImgs(['end 1.png','end 2.png','end 3.png','end 4.png','end 5.png','end 6.png']),
     };
     const sadEndImg  = new Image(); sadEndImg.src  = 'sad ending.png';
     const soccerImg  = new Image(); soccerImg.src  = 'soccer ball.png';
