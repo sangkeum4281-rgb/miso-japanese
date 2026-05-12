@@ -1758,7 +1758,7 @@ function initJump() {
 
     // ── 상태 ────────────────────────────────────
     let phase, score, best, speed, frameCount;
-    let charY, velY, isOnGround, isSliding, deadFrame;
+    let charY, velY, isOnGround, isSliding, slideFrame, deadFrame;
     let obstacles, groundX;
 
     best = parseInt(localStorage.getItem('jbest') || '0');
@@ -1767,7 +1767,7 @@ function initJump() {
         phase = 'ready';
         score = 0; speed = SPEED0; frameCount = 0;
         charY = GROUND; velY = 0;
-        isOnGround = true; isSliding = false; deadFrame = 0;
+        isOnGround = true; isSliding = false; slideFrame = 0; deadFrame = 0;
         obstacles = []; groundX = 0;
     }
     reset();
@@ -1783,7 +1783,11 @@ function initJump() {
     }
     function doSlide() {
         if (phase !== 'playing') return;
-        if (isOnGround) { isSliding = true; clearTimeout(slideTimer); slideTimer = setTimeout(() => { isSliding = false; }, 500); }
+        if (isOnGround && !isSliding) {
+            isSliding = true; slideFrame = 0;
+            clearTimeout(slideTimer);
+            slideTimer = setTimeout(() => { isSliding = false; }, 700);
+        }
     }
 
     canvas.addEventListener('touchstart', e => {
@@ -1821,7 +1825,7 @@ function initJump() {
     function getSpr() {
         if (phase === 'dead')     return [SPR.dead,  Math.min(Math.floor(deadFrame / 4), SPR.dead.length - 1)];
         if (!isOnGround)          return [SPR.jump,  Math.floor(frameCount / 4) % SPR.jump.length];
-        if (isSliding)            return [SPR.slide, Math.floor(frameCount / 4) % SPR.slide.length];
+        if (isSliding)            return [SPR.slide, Math.min(Math.floor(slideFrame / 4), SPR.slide.length - 1)];
         if (phase === 'playing')  return [SPR.run,   Math.floor(frameCount / 5) % SPR.run.length];
         return [SPR.idle, Math.floor(frameCount / 12) % SPR.idle.length];
     }
@@ -1965,6 +1969,7 @@ function initJump() {
         if (!jumpRunning) return;
         jumpRAF = requestAnimationFrame(tick);
         frameCount++;
+        if (isSliding) slideFrame++;
 
         drawBg();
 
