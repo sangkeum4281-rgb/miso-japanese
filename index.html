@@ -434,6 +434,22 @@
         body.excel-mode .bubble-name { color: #217346 !important; }
         body.excel-mode .bubble-time { color: #888 !important; }
 
+        /* 이미지 메시지 */
+        .bubble-img {
+            max-width: 220px; max-height: 280px;
+            border-radius: 14px; display: block;
+            cursor: pointer; object-fit: cover;
+        }
+        .bubble-wrap.me  .bubble-img { border-bottom-right-radius: 4px; }
+        .bubble-wrap.miso .bubble-img { border-bottom-left-radius: 4px; }
+        body.excel-mode .bubble-img { border-radius: 2px !important; }
+
+        /* 업로드 중 표시 */
+        .upload-progress {
+            font-size: 12px; color: #aaa; padding: 8px 14px;
+            background: #f5f5f5; border-radius: 12px;
+        }
+
         /* 이모지 숨기기 */
         body.excel-mode .bubble-avatar,
         body.excel-mode .result-ganadi,
@@ -576,6 +592,9 @@
                 <button class="chat-sender-btn" onclick="clearChat()" style="color:#f9a8c9;flex:0.6;">🗑</button>
             </div>
             <div class="chat-input-row">
+                <label style="width:36px;height:36px;border-radius:50%;background:#fff0f5;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:18px;" title="이미지 전송">
+                    📷<input id="img-input" type="file" accept="image/*" style="display:none" onchange="sendImage(this)">
+                </label>
                 <textarea id="letter-input" rows="1" placeholder="메시지 입력..."></textarea>
                 <button class="chat-send-btn" onclick="sendLetter()">➤</button>
             </div>
@@ -666,6 +685,7 @@
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 <script>
 // ══════════════════════════════════════════════════════
@@ -680,10 +700,11 @@ const FIREBASE_CONFIG = {
     messagingSenderId: "283876823560",
     appId:             "1:283876823560:web:a564b5223d77290ef5f7bd"
 };
-let db = null;
+let db = null, storage = null;
 try {
     firebase.initializeApp(FIREBASE_CONFIG);
-    db = firebase.database();
+    db      = firebase.database();
+    storage = firebase.storage();
 } catch(e) {}
 </script>
 
@@ -1561,7 +1582,10 @@ function renderLetters(items) {
             <img class="bubble-avatar${sameNext ? ' hidden' : ''}" src="${info.avatar}" alt="${info.name}">
             <div class="bubble-col">
                 ${!samePrev ? `<span class="bubble-name">${info.name}</span>` : ''}
-                <div class="bubble">${item.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>
+                ${item.image
+                    ? `<img class="bubble-img" src="${item.image}" onclick="openImg('${item.image}')" loading="lazy">`
+                    : `<div class="bubble">${item.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>`
+                }
                 ${!sameNext ? `<div class="bubble-meta"><span class="bubble-time">${time}</span></div>` : ''}
             </div>
         </div>`;
@@ -1574,6 +1598,39 @@ function clearChat() {
     db.ref('letters').remove();
     Object.keys(_chatItems).forEach(k => delete _chatItems[k]);
     document.getElementById('letter-list').innerHTML = '';
+}
+
+function sendImage(input) {
+    const file = input.files[0];
+    if (!file || !storage || !db) return;
+    input.value = '';
+
+    const key = Date.now();
+    const ref = storage.ref(`chat/${key}_${file.name}`);
+
+    // 업로드 중 임시 표시
+    const el = document.getElementById('letter-list');
+    const tmp = document.createElement('div');
+    tmp.className = `bubble-wrap ${letterSender}`;
+    tmp.id = 'upload-tmp';
+    tmp.innerHTML = `<div class="upload-progress">📤 업로드 중...</div>`;
+    el.appendChild(tmp);
+    el.scrollTop = el.scrollHeight;
+
+    ref.put(file).then(() => ref.getDownloadURL()).then(url => {
+        document.getElementById('upload-tmp')?.remove();
+        db.ref('letters').push({ sender: letterSender, image: url, text: '', ts: key });
+    }).catch(() => {
+        document.getElementById('upload-tmp')?.remove();
+    });
+}
+
+function openImg(url) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;cursor:pointer;';
+    overlay.innerHTML = `<img src="${url}" style="max-width:95vw;max-height:95vh;border-radius:8px;object-fit:contain;">`;
+    overlay.onclick = () => overlay.remove();
+    document.body.appendChild(overlay);
 }
 
 function sendLetter() {
