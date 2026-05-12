@@ -1707,7 +1707,8 @@ function initJump() {
         slide: loadImgs(['slide1.png','slide2.png','slide3.png','slide4.png','slide5.png','slide6.png']),
         dead:  loadImgs(['end1.png','end2.png','end3.png','end4.png','end5.png','end6.png']),
     };
-    const sadEndImg = new Image(); sadEndImg.src = 'sad ending.png';
+    const sadEndImg  = new Image(); sadEndImg.src  = 'sad ending.png';
+    const soccerImg  = new Image(); soccerImg.src  = 'soccer ball.png';
 
     // ── 상수 ────────────────────────────────────
     const GROUND  = H - 60;
@@ -1845,15 +1846,17 @@ function initJump() {
     function drawObstacles() {
         obstacles.forEach(o => {
             if (o.type === 'bar') {
-                // 축구공 — 허리 높이로 직선 비행
-                const r  = o.w / 2;
-                const cx = o.x + r;
-                const cy = o.y + r;
-                // 회전 효과
+                const r   = o.w / 2;
+                const cx  = o.x + r;
+                const cy  = o.y + r;
                 const rot = (frameCount * 0.12) % (Math.PI * 2);
                 ctx.save();
                 ctx.translate(cx, cy); ctx.rotate(rot);
-                drawSoccerBall(0, 0, r);
+                if (soccerImg.complete && soccerImg.naturalWidth) {
+                    ctx.drawImage(soccerImg, -r, -r, r * 2, r * 2);
+                } else {
+                    drawSoccerBall(0, 0, r);
+                }
                 ctx.restore();
             } else {
                 ctx.fillStyle = '#78909c';
