@@ -1713,9 +1713,9 @@ function initJump() {
 
     // 벽 이미지 정의 (이름 기반 크기)
     const WALLS = [
-        { img: new Image(), w: 72, h: 48  },  // big and fat  → 넓고 낮음
-        { img: new Image(), w: 28, h: 40  },  // small        → 작음
-        { img: new Image(), w: 26, h: 72  },  // tall and thin → 좁고 높음
+        { img: new Image(), w: 72, h: 80  },  // big and fat  → 넓고 높은 벽
+        { img: new Image(), w: 24, h: 36  },  // small        → 얇고 낮은 벽
+        { img: new Image(), w: 20, h: 72  },  // tall and thin → 길고 얇은 벽
     ];
     WALLS[0].img.src = 'big and fat wall.png';
     WALLS[1].img.src = 'small wall.png';
