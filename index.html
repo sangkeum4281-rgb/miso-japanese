@@ -1765,10 +1765,12 @@ function initJump() {
 
     // ── 장애물 생성 ──────────────────────────────
     function spawnObstacle() {
-        const type = Math.random() < 0.35 ? 'bar' : 'block'; // bar=웅크리기, block=점프
-        const w = type === 'bar' ? 60 + Math.random() * 30 : 28 + Math.random() * 20;
-        const h = type === 'bar' ? 28 : 48 + Math.random() * 24;
-        const y = type === 'bar' ? GROUND - 55 : GROUND - h;
+        const type = Math.random() < 0.35 ? 'bar' : 'block';
+        const r  = type === 'bar' ? 26 + Math.random() * 8 : 0; // 축구공 반지름
+        const w  = type === 'bar' ? r * 2 : 28 + Math.random() * 20;
+        const h  = type === 'bar' ? r * 2 : 48 + Math.random() * 24;
+        // 축구공: 슬라이드로 피할 수 있는 허리~가슴 높이
+        const y  = type === 'bar' ? GROUND - CHAR_SIZE * 0.65 - r : GROUND - h;
         obstacles.push({ x: W + 20, y, w, h, type, passed: false });
     }
 
@@ -1817,14 +1819,42 @@ function initJump() {
     }
 
     // ── 장애물 그리기 ────────────────────────────
+    function drawSoccerBall(cx, cy, r) {
+        // 흰 공
+        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fillStyle = 'white'; ctx.fill();
+        ctx.strokeStyle = '#222'; ctx.lineWidth = 1.5; ctx.stroke();
+        // 오각형 패턴 (중앙 검정 + 주변 5개)
+        const drawPent = (x, y, size) => {
+            ctx.beginPath();
+            for (let i = 0; i < 5; i++) {
+                const a = (i * 2 * Math.PI / 5) - Math.PI / 2;
+                i === 0 ? ctx.moveTo(x + size * Math.cos(a), y + size * Math.sin(a))
+                        : ctx.lineTo(x + size * Math.cos(a), y + size * Math.sin(a));
+            }
+            ctx.closePath(); ctx.fillStyle = '#222'; ctx.fill();
+        };
+        drawPent(cx, cy, r * 0.28);
+        const pr = r * 0.62;
+        for (let i = 0; i < 5; i++) {
+            const a = (i * 2 * Math.PI / 5) - Math.PI / 2;
+            drawPent(cx + pr * Math.cos(a), cy + pr * Math.sin(a), r * 0.22);
+        }
+    }
+
     function drawObstacles() {
         obstacles.forEach(o => {
             if (o.type === 'bar') {
-                ctx.fillStyle = '#e57373';
-                ctx.fillRect(o.x, o.y, o.w, o.h);
-                ctx.fillStyle = '#c62828';
-                ctx.fillRect(o.x - 4, o.y - 4, o.w + 8, 8);
-                ctx.fillRect(o.x - 4, o.y + o.h - 4, o.w + 8, 8);
+                // 축구공 — 허리 높이로 직선 비행
+                const r  = o.w / 2;
+                const cx = o.x + r;
+                const cy = o.y + r;
+                // 회전 효과
+                const rot = (frameCount * 0.12) % (Math.PI * 2);
+                ctx.save();
+                ctx.translate(cx, cy); ctx.rotate(rot);
+                drawSoccerBall(0, 0, r);
+                ctx.restore();
             } else {
                 ctx.fillStyle = '#78909c';
                 ctx.fillRect(o.x, o.y, o.w, o.h);
