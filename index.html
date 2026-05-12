@@ -338,6 +338,8 @@
 
         .mt-12 { margin-top: 12px; }
 
+        #page-jump.active { display: block !important; }
+
         /* ── 토글 버튼 ── */
         #excel-toggle {
             position: fixed; top: 8px; right: 8px;
@@ -584,8 +586,8 @@
     </div>
 
     <!-- 가나디 점프 -->
-    <div id="page-jump" class="page" style="padding:0;display:none;flex-direction:column;align-items:center;background:#e8f4fd;">
-        <canvas id="jump-canvas" style="display:block;max-width:100%;"></canvas>
+    <div id="page-jump" class="page" style="padding:0;background:#dff0fb;overflow:hidden;">
+        <canvas id="jump-canvas" style="display:block;width:100%;touch-action:none;"></canvas>
     </div>
 
     <!-- 채팅 -->
@@ -1674,7 +1676,7 @@ _letterInput.addEventListener('input', function() {
 });
 
 // ══════════════════════════════════════════════════════
-//  가나디 점프
+//  가나디 점프 (크롬 공룡 스타일 런너)
 // ══════════════════════════════════════════════════════
 let jumpRAF = null, jumpRunning = false;
 
@@ -1685,184 +1687,224 @@ function stopJump() {
 
 function initJump() {
     stopJump();
-    const page   = document.getElementById('page-jump');
     const canvas = document.getElementById('jump-canvas');
+    const page   = document.getElementById('page-jump');
+    const topH   = document.querySelector('.header').offsetHeight + document.querySelector('.nav').offsetHeight;
     const W = Math.min(window.innerWidth, 480);
-    const H = window.innerHeight - document.querySelector('.header').offsetHeight - document.querySelector('.nav').offsetHeight;
+    const H = window.innerHeight - topH;
     canvas.width  = W;
     canvas.height = H;
     page.style.height = H + 'px';
-
     const ctx = canvas.getContext('2d');
+    const DPR = window.devicePixelRatio || 1;
 
-    // 이미지 로드
-    const gImg = new Image(); gImg.src = 'ganadi_main.png';
-    const sadImg = new Image(); sadImg.src = 'ganadi_sad.png';
+    // ── 스프라이트 로드 ──────────────────────────
+    function loadImgs(srcs) { return srcs.map(s => { const i = new Image(); i.src = s; return i; }); }
+    const SPR = {
+        idle:  loadImgs(['normal1.png','normal2.png']),
+        run:   loadImgs(['walk1.png','walk2.png','walk3.png','walk4.png','walk5.png','walk6.png']),
+        jump:  loadImgs(['jump1.png','jump2.png','jump3.png','jump4.png','jump5.png','jump6.png']),
+        slide: loadImgs(['slide1.png','slide2.png','slide3.png','slide4.png','slide5.png','slide6.png']),
+        dead:  loadImgs(['end1.png','end2.png','end3.png','end4.png','end5.png','end6.png']),
+    };
 
-    // 상태
-    const GAP  = 160, PIPE_W = 52, SPEED0 = 2.5;
-    let bird, pipes, score, best, phase, frameCount, speed;
+    // ── 상수 ────────────────────────────────────
+    const GROUND  = H - 60;
+    const CHAR_X  = 80;
+    const CHAR_H_RUN   = 72;
+    const CHAR_H_SLIDE = 40;
+    const SPEED0  = 4;
+    const GRAVITY = 0.55;
+    const JUMP_V  = -13;
+
+    // ── 상태 ────────────────────────────────────
+    let phase, score, best, speed, frameCount;
+    let charY, velY, isOnGround, isSliding, deadFrame;
+    let obstacles, groundX;
+
+    best = parseInt(localStorage.getItem('jbest') || '0');
 
     function reset() {
-        bird  = { x: W * 0.25, y: H * 0.4, vy: 0, r: 22 };
-        pipes = [];
-        score = 0; frameCount = 0; speed = SPEED0;
-        phase = 'ready'; // ready → playing → dead
+        phase = 'ready';
+        score = 0; speed = SPEED0; frameCount = 0;
+        charY = GROUND; velY = 0;
+        isOnGround = true; isSliding = false; deadFrame = 0;
+        obstacles = []; groundX = 0;
     }
     reset();
 
-    // Firebase 최고점
-    best = parseInt(localStorage.getItem('jump_best') || '0');
+    // ── 입력 ────────────────────────────────────
+    let touchStartY = 0, slideTimer = null;
 
-    function jump() {
+    function doJump() {
+        if (phase === 'dead')  { reset(); return; }
         if (phase === 'ready') { phase = 'playing'; return; }
-        if (phase === 'playing') bird.vy = -7.5;
-        if (phase === 'dead') { reset(); }
+        if (isOnGround && !isSliding) { velY = JUMP_V; isOnGround = false; }
+    }
+    function doSlide() {
+        if (phase !== 'playing') return;
+        if (isOnGround) { isSliding = true; clearTimeout(slideTimer); slideTimer = setTimeout(() => { isSliding = false; }, 500); }
     }
 
-    canvas.addEventListener('click',      jump);
-    canvas.addEventListener('touchstart', e => { e.preventDefault(); jump(); }, { passive: false });
+    canvas.addEventListener('touchstart', e => {
+        e.preventDefault();
+        touchStartY = e.touches[0].clientY;
+    }, { passive: false });
+    canvas.addEventListener('touchend', e => {
+        e.preventDefault();
+        const dy = e.changedTouches[0].clientY - touchStartY;
+        if (dy > 30) doSlide(); else doJump();
+    }, { passive: false });
+    canvas.addEventListener('click', doJump);
 
-    function addPipe() {
-        const minH = 60, maxH = H - GAP - minH;
-        const topH = minH + Math.random() * (maxH - minH);
-        pipes.push({ x: W, topH });
+    document.addEventListener('keydown', e => {
+        if (!document.getElementById('page-jump').classList.contains('active')) return;
+        if (e.code === 'Space' || e.code === 'ArrowUp')   doJump();
+        if (e.code === 'ArrowDown') doSlide();
+    });
+
+    // ── 장애물 생성 ──────────────────────────────
+    function spawnObstacle() {
+        const type = Math.random() < 0.35 ? 'bar' : 'block'; // bar=웅크리기, block=점프
+        const w = type === 'bar' ? 60 + Math.random() * 30 : 28 + Math.random() * 20;
+        const h = type === 'bar' ? 28 : 48 + Math.random() * 24;
+        const y = type === 'bar' ? GROUND - 55 : GROUND - h;
+        obstacles.push({ x: W + 20, y, w, h, type, passed: false });
     }
 
-    function drawRoundRect(x, y, w, h, r, fill) {
-        ctx.beginPath();
-        ctx.roundRect(x, y, w, h, r);
-        ctx.fillStyle = fill;
-        ctx.fill();
+    // ── 스프라이트 그리기 ────────────────────────
+    function getSpr() {
+        if (phase === 'dead')     return [SPR.dead,  Math.min(Math.floor(deadFrame / 4), SPR.dead.length - 1)];
+        if (!isOnGround)          return [SPR.jump,  Math.floor(frameCount / 4) % SPR.jump.length];
+        if (isSliding)            return [SPR.slide, Math.floor(frameCount / 4) % SPR.slide.length];
+        if (phase === 'playing')  return [SPR.run,   Math.floor(frameCount / 5) % SPR.run.length];
+        return [SPR.idle, Math.floor(frameCount / 12) % SPR.idle.length];
     }
 
-    function drawPipe(p) {
-        // 위 파이프
-        drawRoundRect(p.x, 0, PIPE_W, p.topH, [0,0,8,8], '#4caf50');
-        drawRoundRect(p.x - 4, p.topH - 20, PIPE_W + 8, 20, 8, '#388e3c');
-        // 아래 파이프
-        const botY = p.topH + GAP;
-        drawRoundRect(p.x, botY, PIPE_W, H - botY, [8,8,0,0], '#4caf50');
-        drawRoundRect(p.x - 4, botY, PIPE_W + 8, 20, 8, '#388e3c');
+    function drawChar() {
+        const [arr, idx] = getSpr();
+        const img = arr[idx];
+        if (!img.complete) return;
+        const h = isSliding ? CHAR_H_SLIDE : CHAR_H_RUN;
+        const w = h * (img.naturalWidth / (img.naturalHeight || 1) || 1);
+        const y = isSliding ? GROUND - CHAR_H_SLIDE : charY - CHAR_H_RUN;
+        ctx.drawImage(img, CHAR_X - w / 2, y, w, h);
     }
 
-    function drawBird(img) {
-        ctx.save();
-        const tilt = Math.min(Math.max(bird.vy * 3, -30), 70);
-        ctx.translate(bird.x, bird.y);
-        ctx.rotate(tilt * Math.PI / 180);
-        const s = bird.r * 2.2;
-        ctx.drawImage(img, -s/2, -s/2, s, s);
-        ctx.restore();
-    }
-
+    // ── 배경 ────────────────────────────────────
     function drawBg() {
-        // 하늘
-        const sky = ctx.createLinearGradient(0, 0, 0, H);
-        sky.addColorStop(0, '#87ceeb');
-        sky.addColorStop(1, '#c8e6f5');
-        ctx.fillStyle = sky;
-        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#dff0fb'; ctx.fillRect(0, 0, W, H);
+        // 구름 장식 (정적)
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        [[60,40,50,18],[180,25,40,14],[320,55,60,20],[430,30,45,16]].forEach(([x,y,w,h])=>{
+            ctx.beginPath(); ctx.ellipse(x,y,w,h,0,0,Math.PI*2); ctx.fill();
+        });
         // 땅
-        ctx.fillStyle = '#8bc34a';
-        ctx.fillRect(0, H - 30, W, 30);
-        ctx.fillStyle = '#558b2f';
-        ctx.fillRect(0, H - 30, W, 6);
+        if (phase === 'playing') groundX = (groundX - speed + W * 2) % (W * 2);
+        ctx.fillStyle = '#b5d99c'; ctx.fillRect(0, GROUND, W, H - GROUND);
+        ctx.fillStyle = '#8bc34a'; ctx.fillRect(0, GROUND, W, 6);
+        // 땅 점선
+        ctx.strokeStyle = '#a5c97a'; ctx.setLineDash([20, 20]);
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let x = -groundX % 40; x < W; x += 40) {
+            ctx.moveTo(x, GROUND + 3); ctx.lineTo(x + 20, GROUND + 3);
+        }
+        ctx.stroke(); ctx.setLineDash([]);
     }
 
+    // ── 장애물 그리기 ────────────────────────────
+    function drawObstacles() {
+        obstacles.forEach(o => {
+            if (o.type === 'bar') {
+                ctx.fillStyle = '#e57373';
+                ctx.fillRect(o.x, o.y, o.w, o.h);
+                ctx.fillStyle = '#c62828';
+                ctx.fillRect(o.x - 4, o.y - 4, o.w + 8, 8);
+                ctx.fillRect(o.x - 4, o.y + o.h - 4, o.w + 8, 8);
+            } else {
+                ctx.fillStyle = '#78909c';
+                ctx.fillRect(o.x, o.y, o.w, o.h);
+                ctx.fillStyle = '#546e7a';
+                ctx.fillRect(o.x, o.y, o.w, 6);
+            }
+        });
+    }
+
+    // ── HUD ─────────────────────────────────────
     function drawHUD() {
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 36px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.shadowColor = 'rgba(0,0,0,0.3)';
-        ctx.shadowBlur = 4;
-        ctx.fillText(score, W / 2, 60);
-        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#37474f'; ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'right';
+        ctx.fillText(score, W - 16, 36);
+        ctx.font = '13px sans-serif'; ctx.fillStyle = '#90a4ae';
+        ctx.fillText('최고 ' + best, W - 16, 56);
     }
 
-    function drawReady() {
-        ctx.fillStyle = 'rgba(0,0,0,0.35)';
-        ctx.fillRect(0, 0, W, H);
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 28px sans-serif';
+    function drawOverlay(title, sub, sub2) {
+        ctx.fillStyle = 'rgba(0,0,0,0.38)'; ctx.fillRect(0, 0, W, H);
         ctx.textAlign = 'center';
-        ctx.fillText('가나디 점프! 🐾', W/2, H/2 - 40);
-        ctx.font = '18px sans-serif';
-        ctx.fillText('탭해서 시작', W/2, H/2 + 4);
-        ctx.font = '14px sans-serif';
-        ctx.fillStyle = '#ffd700';
-        ctx.fillText(`최고 기록: ${best}점`, W/2, H/2 + 36);
+        ctx.fillStyle = 'white'; ctx.font = 'bold 26px sans-serif';
+        ctx.fillText(title, W/2, H/2 - 44);
+        ctx.font = '20px sans-serif'; ctx.fillStyle = '#ffd700';
+        ctx.fillText(sub, W/2, H/2 + 4);
+        ctx.font = '14px sans-serif'; ctx.fillStyle = '#ddd';
+        ctx.fillText(sub2, W/2, H/2 + 38);
     }
 
-    function drawDead() {
-        ctx.fillStyle = 'rgba(0,0,0,0.45)';
-        ctx.fillRect(0, 0, W, H);
-        ctx.textAlign = 'center';
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 26px sans-serif';
-        ctx.fillText('💀 게임 오버', W/2, H/2 - 50);
-        ctx.font = 'bold 40px sans-serif';
-        ctx.fillStyle = '#ffd700';
-        ctx.fillText(score + '점', W/2, H/2 + 4);
-        ctx.font = '16px sans-serif';
-        ctx.fillStyle = 'white';
-        ctx.fillText(`최고 기록: ${best}점`, W/2, H/2 + 40);
-        ctx.font = '14px sans-serif';
-        ctx.fillStyle = '#ddd';
-        ctx.fillText('탭해서 다시 시작', W/2, H/2 + 72);
+    // ── 충돌 ────────────────────────────────────
+    function collides(o) {
+        const cx = CHAR_X, cy = isSliding ? GROUND - CHAR_H_SLIDE / 2 : charY - CHAR_H_RUN / 2;
+        const ch = (isSliding ? CHAR_H_SLIDE : CHAR_H_RUN) * 0.65;
+        const cw = 28;
+        return cx + cw/2 > o.x + 4 && cx - cw/2 < o.x + o.w - 4 &&
+               cy + ch/2 > o.y + 4 && cy - ch/2 < o.y + o.h - 4;
     }
 
+    // ── 메인 루프 ────────────────────────────────
     function tick() {
         if (!jumpRunning) return;
         jumpRAF = requestAnimationFrame(tick);
         frameCount++;
+
         drawBg();
 
         if (phase === 'playing') {
-            // 중력
-            bird.vy += 0.38;
-            bird.y  += bird.vy;
-            speed    = SPEED0 + score * 0.04;
+            // 물리
+            velY += GRAVITY; charY += velY;
+            if (charY >= GROUND) { charY = GROUND; velY = 0; isOnGround = true; }
 
-            // 파이프 생성
-            if (frameCount % Math.max(70, 110 - score * 2) === 0) addPipe();
+            // 속도 증가
+            speed = SPEED0 + Math.floor(score / 5) * 0.4;
 
-            // 파이프 이동 & 점수
-            pipes.forEach(p => {
-                p.x -= speed;
-                if (!p.passed && p.x + PIPE_W < bird.x) {
-                    p.passed = true; score++;
+            // 장애물
+            const interval = Math.max(55, 90 - score * 1.5);
+            if (frameCount % Math.round(interval) === 0) spawnObstacle();
+            obstacles.forEach(o => o.x -= speed);
+            obstacles = obstacles.filter(o => o.x + o.w > 0);
+
+            // 점수
+            obstacles.forEach(o => {
+                if (!o.passed && o.x + o.w < CHAR_X - 14) {
+                    o.passed = true; score++;
                     if (score > best) {
                         best = score;
-                        localStorage.setItem('jump_best', best);
-                        if (db) db.ref(`jump_best/${letterSender}`).set(best);
+                        localStorage.setItem('jbest', best);
+                        if (db) db.ref('jump_best/' + letterSender).set(best);
                     }
                 }
             });
-            pipes = pipes.filter(p => p.x + PIPE_W > 0);
 
             // 충돌
-            const dead =
-                bird.y - bird.r < 0 ||
-                bird.y + bird.r > H - 30 ||
-                pipes.some(p =>
-                    bird.x + bird.r > p.x + 6 &&
-                    bird.x - bird.r < p.x + PIPE_W - 6 &&
-                    (bird.y - bird.r < p.topH || bird.y + bird.r > p.topH + GAP)
-                );
-            if (dead) phase = 'dead';
+            if (obstacles.some(collides)) { phase = 'dead'; deadFrame = 0; }
         }
 
-        pipes.forEach(drawPipe);
+        if (phase === 'dead') deadFrame++;
 
-        if (phase === 'dead') {
-            drawBird(sadImg);
-            drawDead();
-        } else {
-            drawBird(gImg);
-            if (phase === 'playing') drawHUD();
-            if (phase === 'ready')   drawReady();
-        }
+        drawObstacles();
+        drawChar();
+
+        if (phase === 'playing') drawHUD();
+        if (phase === 'ready')   drawOverlay('가나디 점프!', '', '탭 = 점프   아래 스와이프 = 슬라이드');
+        if (phase === 'dead')    drawOverlay('GAME OVER', score + '점  (최고 ' + best + '점)', '탭해서 다시 시작');
     }
 
     jumpRunning = true;
