@@ -1707,6 +1707,7 @@ function initJump() {
         slide: loadImgs(['slide1.png','slide2.png','slide3.png','slide4.png','slide5.png','slide6.png']),
         dead:  loadImgs(['end1.png','end2.png','end3.png','end4.png','end5.png','end6.png']),
     };
+    const sadEndImg = new Image(); sadEndImg.src = 'sad ending.png';
 
     // ── 상수 ────────────────────────────────────
     const GROUND  = H - 60;
@@ -1841,7 +1842,25 @@ function initJump() {
         ctx.fillText('최고 ' + best, W - 16, 56);
     }
 
+    // sad ending 페이드인 (deadFrame 60 이후 서서히)
+    const FADE_START = 60, FADE_DUR = 80;
+    function drawSadEnding() {
+        if (deadFrame < FADE_START) return;
+        const alpha = Math.min((deadFrame - FADE_START) / FADE_DUR, 1);
+        if (!sadEndImg.complete || !alpha) return;
+        ctx.globalAlpha = alpha;
+        // 이미지를 화면 전체에 cover 스타일로
+        const iR = sadEndImg.naturalWidth / sadEndImg.naturalHeight;
+        const cR = W / H;
+        let sw, sh, sx, sy;
+        if (iR > cR) { sh = H; sw = H * iR; sx = (W - sw) / 2; sy = 0; }
+        else         { sw = W; sh = W / iR; sx = 0; sy = (H - sh) / 2; }
+        ctx.drawImage(sadEndImg, sx, sy, sw, sh);
+        ctx.globalAlpha = 1;
+    }
+
     function drawOverlay(title, sub, sub2) {
+        if (deadFrame >= FADE_START) return; // sad ending이 뜨면 텍스트 숨김
         ctx.fillStyle = 'rgba(0,0,0,0.38)'; ctx.fillRect(0, 0, W, H);
         ctx.textAlign = 'center';
         ctx.fillStyle = 'white'; ctx.font = 'bold 26px sans-serif';
@@ -1906,7 +1925,10 @@ function initJump() {
 
         if (phase === 'playing') drawHUD();
         if (phase === 'ready')   drawOverlay('가나디 점프!', '', '탭 = 점프   아래 스와이프 = 슬라이드');
-        if (phase === 'dead')    drawOverlay('GAME OVER', score + '점  (최고 ' + best + '점)', '탭해서 다시 시작');
+        if (phase === 'dead') {
+            drawSadEnding();
+            drawOverlay('GAME OVER', score + '점  (최고 ' + best + '점)', '탭해서 다시 시작');
+        }
     }
 
     jumpRunning = true;
