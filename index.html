@@ -339,6 +339,7 @@
         .mt-12 { margin-top: 12px; }
 
         #page-jump.active { display: block !important; }
+        #page-jump { min-height: 0 !important; background: white !important; }
 
         /* ── 토글 버튼 ── */
         #excel-toggle {
@@ -1715,8 +1716,8 @@ function initJump() {
     const CHAR_X  = 80;
     const CHAR_SIZE = 100;
     const SPEED0    = 4;
-    const GRAVITY   = 0.58;
-    const JUMP_V    = -15;
+    const GRAVITY   = 0.68;
+    const JUMP_V    = -12;
 
     // ── 상태 ────────────────────────────────────
     let phase, score, best, speed, frameCount;
@@ -1740,7 +1741,8 @@ function initJump() {
     function doJump() {
         if (phase === 'dead')  { reset(); return; }
         if (phase === 'ready') { phase = 'playing'; return; }
-        if (isOnGround && !isSliding) { velY = JUMP_V; isOnGround = false; }
+        if (isSliding) { isSliding = false; clearTimeout(slideTimer); }
+        if (isOnGround) { velY = JUMP_V; isOnGround = false; }
     }
     function doSlide() {
         if (phase !== 'playing') return;
