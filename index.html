@@ -1716,8 +1716,8 @@ function initJump() {
     const CHAR_X  = 80;
     const CHAR_SIZE = 100;
     const SPEED0    = 4;
-    const GRAVITY   = 0.68;
-    const JUMP_V    = -12;
+    const GRAVITY   = 0.70;
+    const JUMP_V    = -14;
 
     // ── 상태 ────────────────────────────────────
     let phase, score, best, speed, frameCount;
@@ -1772,8 +1772,8 @@ function initJump() {
         const r  = type === 'bar' ? 26 + Math.random() * 8 : 0; // 축구공 반지름
         const w  = type === 'bar' ? r * 2 : 28 + Math.random() * 20;
         const h  = type === 'bar' ? r * 2 : 48 + Math.random() * 24;
-        // 축구공: 슬라이드 시 머리 위로 지나가는 높이
-        const y  = type === 'bar' ? GROUND - CHAR_SIZE * 0.45 - r * 2 : GROUND - h;
+        // 축구공: 점프 최대 높이(140px)보다 위에 위치 → 슬라이드로만 회피 가능
+        const y  = type === 'bar' ? GROUND - 170 : GROUND - h;
         obstacles.push({ x: W + 20, y, w, h, type, passed: false });
     }
 
