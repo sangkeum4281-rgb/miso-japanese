@@ -1711,6 +1711,16 @@ function initJump() {
     const sadEndImg  = new Image(); sadEndImg.src  = 'sad ending.png';
     const soccerImg  = new Image(); soccerImg.src  = 'soccer ball.png';
 
+    // 벽 이미지 정의 (이름 기반 크기)
+    const WALLS = [
+        { img: new Image(), w: 72, h: 48  },  // big and fat  → 넓고 낮음
+        { img: new Image(), w: 28, h: 40  },  // small        → 작음
+        { img: new Image(), w: 26, h: 72  },  // tall and thin → 좁고 높음
+    ];
+    WALLS[0].img.src = 'big and fat wall.png';
+    WALLS[1].img.src = 'small wall.png';
+    WALLS[2].img.src = 'tall and thin wall.PNG';
+
     // ── 상수 ────────────────────────────────────
     const GROUND  = H - 60;
     const CHAR_X  = 80;
@@ -1769,12 +1779,15 @@ function initJump() {
     // ── 장애물 생성 ──────────────────────────────
     function spawnObstacle() {
         const type = Math.random() < 0.35 ? 'bar' : 'block';
-        const r  = type === 'bar' ? 26 + Math.random() * 8 : 0; // 축구공 반지름
-        const w  = type === 'bar' ? r * 2 : 28 + Math.random() * 20;
-        const h  = type === 'bar' ? r * 2 : 48 + Math.random() * 24;
-        // 축구공: 슬라이드 시 머리 위로 지나가는 높이
-        const y  = type === 'bar' ? GROUND - CHAR_SIZE * 0.45 - r * 2 : GROUND - h;
-        obstacles.push({ x: W + 20, y, w, h, type, passed: false });
+        if (type === 'bar') {
+            const r = 26 + Math.random() * 8;
+            const y = GROUND - CHAR_SIZE * 0.45 - r * 2;
+            obstacles.push({ x: W + 20, y, w: r * 2, h: r * 2, type, passed: false, r });
+        } else {
+            const wallIdx = Math.floor(Math.random() * WALLS.length);
+            const wall    = WALLS[wallIdx];
+            obstacles.push({ x: W + 20, y: GROUND - wall.h, w: wall.w, h: wall.h, type, passed: false, wallIdx });
+        }
     }
 
     // ── 스프라이트 그리기 ────────────────────────
@@ -1861,10 +1874,13 @@ function initJump() {
                 }
                 ctx.restore();
             } else {
-                ctx.fillStyle = '#78909c';
-                ctx.fillRect(o.x, o.y, o.w, o.h);
-                ctx.fillStyle = '#546e7a';
-                ctx.fillRect(o.x, o.y, o.w, 6);
+                const wall = WALLS[o.wallIdx];
+                if (wall && wall.img.complete && wall.img.naturalWidth) {
+                    ctx.drawImage(wall.img, o.x, o.y, o.w, o.h);
+                } else {
+                    ctx.fillStyle = '#78909c';
+                    ctx.fillRect(o.x, o.y, o.w, o.h);
+                }
             }
         });
     }
