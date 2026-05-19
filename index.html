@@ -1182,7 +1182,7 @@ function addWord() {
     const fg = document.getElementById('input-furigana').value.trim();
     const kr = document.getElementById('input-korean').value.trim();
     if (!jp || !kr) { alert('일본어 단어와 한국어 뜻을 입력해주세요!'); return; }
-    words.push({ japanese: jp, furigana: fg, korean: kr, memorized: false });
+    words.push({ japanese: jp, furigana: fg, korean: kr, memorized: false, addedAt: Date.now() });
     saveWords();
     ['input-japanese','input-furigana','input-korean'].forEach(id => document.getElementById(id).value = '');
 
@@ -1209,10 +1209,10 @@ function bulkAddWords() {
     text.split('\n').forEach(line => {
         const parts = line.split(',').map(p => p.trim());
         if (parts.length === 3 && parts[0] && parts[2]) {
-            words.push({ japanese: parts[0], furigana: parts[1], korean: parts[2], memorized: false });
+            words.push({ japanese: parts[0], furigana: parts[1], korean: parts[2], memorized: false, addedAt: Date.now() });
             added++;
         } else if (parts.length === 2 && parts[0] && parts[1]) {
-            words.push({ japanese: parts[0], furigana: '', korean: parts[1], memorized: false });
+            words.push({ japanese: parts[0], furigana: '', korean: parts[1], memorized: false, addedAt: Date.now() });
             added++;
         }
     });
@@ -1334,9 +1334,26 @@ function initQuiz() {
         </button>`;
 }
 
+function weightedShuffle(pool) {
+    const now = Date.now();
+    const DAY = 86400000;
+    return pool
+        .map(w => {
+            let weight = 1;
+            if (w.addedAt) {
+                const days = (now - w.addedAt) / DAY;
+                if (days < 7)  weight = 4;
+                else if (days < 30) weight = 2;
+            }
+            return { w, sort: Math.random() / weight };
+        })
+        .sort((a, b) => a.sort - b.sort)
+        .map(x => x.w);
+}
+
 function startQuiz(count) {
     let pool = words.filter(w => !w.memorized);
-    pool = pool.sort(() => Math.random() - 0.5);
+    pool = weightedShuffle(pool);
     quizWords = pool.slice(0, count);
     quizIndex = 0; quizCorrect = 0; quizAnswered = false;
     streak = 0; wrongStreak = 0;
