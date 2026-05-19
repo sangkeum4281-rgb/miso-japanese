@@ -1078,16 +1078,15 @@ function saveStats() {
     if (db) db.ref('stats').set(stats);
 }
 
-// Firebase에서 단어/통계 불러오기 (다른 기기에서 수정된 경우 반영)
+// Firebase 실시간 동기화 - 어떤 창에서 변경해도 모든 창에 자동 반영
 if (db) {
-    db.ref('words').once('value').then(snap => {
+    db.ref('words').on('value', snap => {
         const fbWords = snap.val();
         if (fbWords && Array.isArray(fbWords)) {
             words = fbWords;
             localStorage.setItem('miso_words', JSON.stringify(words));
             renderWordList();
         } else {
-            // Firebase에 없으면 현재 로컬 데이터 올리기
             db.ref('words').set(words);
         }
     });
@@ -1309,11 +1308,11 @@ function moveStudy(dir) {
 //  Quiz
 // ══════════════════════════════════════════════════════
 function initQuiz() {
-    let pool = words.filter(w => !w.memorized);
-    if (pool.length < 4) pool = [...words];
+    const pool = words.filter(w => !w.memorized);
     const el = document.getElementById('quiz-content');
     if (pool.length < 4) {
-        el.innerHTML = `<div class="empty-state"><div class="emoji">🎯</div><p>퀴즈를 하려면<br>최소 4개 단어가 필요해요!</p></div>`;
+        const memorizedCount = words.length - pool.length;
+        el.innerHTML = `<div class="empty-state"><div class="emoji">🎯</div><p>학습중인 단어가 4개 미만이에요!<br><span style="font-size:13px;color:#bbb;">암기완료 ${memorizedCount}개 제외 중<br>단어를 추가하거나 암기완료를 해제해보세요</span></p></div>`;
         return;
     }
     const counts = [10, 20, 30, 50].filter(n => n <= pool.length);
@@ -1337,7 +1336,6 @@ function initQuiz() {
 
 function startQuiz(count) {
     let pool = words.filter(w => !w.memorized);
-    if (pool.length < 4) pool = [...words];
     pool = pool.sort(() => Math.random() - 0.5);
     quizWords = pool.slice(0, count);
     quizIndex = 0; quizCorrect = 0; quizAnswered = false;
