@@ -1365,20 +1365,32 @@ function renderQuiz() {
     const w = quizWords[quizIndex];
     const pct = (quizIndex / quizWords.length) * 100;
     quizAnswered = false;
-    const others = words.filter(x => x.korean !== w.korean).sort(() => Math.random() - 0.5).slice(0, 3);
-    const opts = [w, ...others].sort(() => Math.random() - 0.5);
+    const jp2kr = Math.random() < 0.5;
+
+    let question, sub, others, opts, optHTML;
+    if (jp2kr) {
+        question = `${w.furigana ? `<div class="quiz-furigana">${w.furigana}</div>` : ''}<div class="quiz-word">${w.japanese}</div>`;
+        sub = '이 단어의 뜻은?';
+        others = words.filter(x => x.korean !== w.korean).sort(() => Math.random() - 0.5).slice(0, 3);
+        opts = [w, ...others].sort(() => Math.random() - 0.5);
+        optHTML = opts.map(o => `<button class="quiz-option" data-value="${esc(o.korean)}" onclick="answerQuiz(this,'${esc(o.korean)}','${esc(w.korean)}')">${o.korean}</button>`).join('');
+    } else {
+        question = `<div class="quiz-word" style="font-size:28px">${w.korean}</div>`;
+        sub = '이 뜻의 일본어는?';
+        others = words.filter(x => x.japanese !== w.japanese).sort(() => Math.random() - 0.5).slice(0, 3);
+        opts = [w, ...others].sort(() => Math.random() - 0.5);
+        optHTML = opts.map(o => `<button class="quiz-option" data-value="${esc(o.japanese)}" onclick="answerQuiz(this,'${esc(o.japanese)}','${esc(w.japanese)}')">${o.japanese}${o.furigana ? `<div style="font-size:11px;opacity:0.7;margin-top:2px">${o.furigana}</div>` : ''}</button>`).join('');
+    }
+
     document.getElementById('quiz-content').innerHTML = `
         <div class="counter-text">${quizIndex + 1} / ${quizWords.length}</div>
         <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
         <div class="score-display">점수: ${quizCorrect} / ${quizIndex}</div>
         <div class="quiz-question">
-            ${w.furigana ? `<div class="quiz-furigana">${w.furigana}</div>` : ''}
-            <div class="quiz-word">${w.japanese}</div>
-            <div class="quiz-sub">이 단어의 뜻은?</div>
+            ${question}
+            <div class="quiz-sub">${sub}</div>
         </div>
-        <div class="quiz-options">
-            ${opts.map(o => `<button class="quiz-option" onclick="answerQuiz(this,'${esc(o.korean)}','${esc(w.korean)}')">${o.korean}</button>`).join('')}
-        </div>`;
+        <div class="quiz-options">${optHTML}</div>`;
 }
 
 function esc(s) { return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
@@ -1391,7 +1403,7 @@ function answerQuiz(btn, selected, correct) {
     const isCorrect = selected === correct;
     document.querySelectorAll('.quiz-option').forEach(b => {
         b.disabled = true;
-        if (b.textContent.trim() === correct) b.classList.add('correct');
+        if (b.dataset.value === correct) b.classList.add('correct');
         else if (b === btn) b.classList.add('wrong');
     });
     if (isCorrect) {
