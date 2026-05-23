@@ -1141,7 +1141,7 @@ function renderWordList() {
         el.innerHTML = `<div class="empty-state"><div class="emoji">🌸</div><p>${currentFilter === 'all' ? '단어를 추가해보세요!' : '해당하는 단어가 없어요'}</p></div>`;
         return;
     }
-    el.innerHTML = list.map(w => {
+    el.innerHTML = [...list].reverse().map(w => {
         const idx = words.indexOf(w);
         return `<div class="word-card ${w.memorized ? 'memorized' : ''}">
             <div class="word-info">
