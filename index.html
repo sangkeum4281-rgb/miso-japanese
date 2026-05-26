@@ -1753,6 +1753,19 @@ function initJump() {
     const ctx = canvas.getContext('2d');
     const DPR = window.devicePixelRatio || 1;
 
+    // ── 사운드 ──────────────────────────────────
+    const SFX = {
+        start: new Audio('start.mp3'),
+        jump:  [new Audio('jump1.mp3'), new Audio('jump2.mp3')],
+        slide: new Audio('slide.mp3'),
+        over:  new Audio('over.mp3'),
+    };
+    function playsfx(key) {
+        const s = SFX[key];
+        const a = Array.isArray(s) ? s[Math.floor(Math.random() * s.length)] : s;
+        a.currentTime = 0; a.play().catch(() => {});
+    }
+
     // ── 스프라이트 로드 ──────────────────────────
     function loadImgs(srcs) { return srcs.map(s => { const i = new Image(); i.src = s; return i; }); }
     const SPR = {
@@ -1804,14 +1817,14 @@ function initJump() {
 
     function doJump() {
         if (phase === 'dead')  { reset(); return; }
-        if (phase === 'ready') { phase = 'playing'; return; }
+        if (phase === 'ready') { phase = 'playing'; playsfx('start'); return; }
         if (isSliding) { isSliding = false; clearTimeout(slideTimer); }
-        if (isOnGround) { velY = JUMP_V; isOnGround = false; }
+        if (isOnGround) { velY = JUMP_V; isOnGround = false; playsfx('jump'); }
     }
     function doSlide() {
         if (phase !== 'playing') return;
         if (isOnGround && !isSliding) {
-            isSliding = true; slideFrame = 0;
+            isSliding = true; slideFrame = 0; playsfx('slide');
             clearTimeout(slideTimer);
             slideTimer = setTimeout(() => { isSliding = false; }, 700);
         }
@@ -2027,7 +2040,7 @@ function initJump() {
             });
 
             // 충돌
-            if (obstacles.some(collides)) { phase = 'dead'; deadFrame = 0; }
+            if (obstacles.some(collides)) { phase = 'dead'; deadFrame = 0; playsfx('over'); }
         }
 
         if (phase === 'dead') deadFrame++;
