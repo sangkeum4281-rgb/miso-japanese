@@ -1162,7 +1162,7 @@ function toggleMemo(i) {
     saveWords();
     renderWordList();
     if (words[i].memorized) {
-        setTimeout(() => showGanadiPopup('happy', '진짜 외웠다고 생각하나?'), 400);
+        if (Math.random() < 0.2) setTimeout(() => showGanadiPopup('happy', '진짜 외웠다고 생각하나?'), 400);
     }
 }
 
