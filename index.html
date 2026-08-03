@@ -1071,23 +1071,58 @@ let quizWords  = [], quizIndex  = 0, quizCorrect  = 0, quizAnswered = false;
 
 function saveWords() {
     localStorage.setItem('miso_words', JSON.stringify(words));
-    if (db) db.ref('words').set(words);
 }
 function saveStats() {
     localStorage.setItem('miso_stats', JSON.stringify(stats));
     if (db) db.ref('stats').set(stats);
 }
 
-// Firebase 실시간 동기화 - 어떤 창에서 변경해도 모든 창에 자동 반영
+// ══════════════════════════════════════════════════════
+//  단어 동기화 - Firebase가 유일한 저장소 (words/{key} 개별 항목)
+//  기기마다 자기 단어만 자기 키에 쓰므로 서로 덮어쓰지 않고 합쳐진다.
+// ══════════════════════════════════════════════════════
+function wordSig(w) { return `${w.japanese}||${w.furigana}||${w.korean}`; }
+
 if (db) {
-    db.ref('words').on('value', snap => {
-        const fbWords = snap.val();
-        if (fbWords && Array.isArray(fbWords)) {
-            words = fbWords;
-            localStorage.setItem('miso_words', JSON.stringify(words));
-            renderWordList();
+    db.ref('words').once('value').then(snap => {
+        const val = snap.val();
+        const updates = {};
+
+        if (Array.isArray(val)) {
+            // 예전 방식(배열 통째 저장)으로 남아있던 데이터를 개별 키로 이전
+            val.forEach(w => { updates[db.ref('words').push().key] = w; });
+        } else if (val) {
+            const existingSigs = new Set(Object.values(val).map(wordSig));
+            words.forEach(w => {
+                if (!existingSigs.has(wordSig(w))) {
+                    updates[db.ref('words').push().key] = w;
+                    existingSigs.add(wordSig(w));
+                }
+            });
         } else {
-            db.ref('words').set(words);
+            words.forEach(w => { updates[db.ref('words').push().key] = w; });
+        }
+
+        const finish = () => {
+            db.ref('words').on('value', snap2 => {
+                const v = snap2.val();
+                if (v && !Array.isArray(v)) {
+                    words = Object.keys(v)
+                        .map(k => ({ id: k, ...v[k] }))
+                        .sort((a, b) => (a.addedAt || 0) - (b.addedAt || 0));
+                    localStorage.setItem('miso_words', JSON.stringify(words));
+                    renderWordList();
+                }
+            });
+        };
+
+        if (Array.isArray(val)) {
+            // 배열이었던 노드는 한 번에 새 형태로 교체
+            db.ref('words').set(updates).then(finish);
+        } else if (Object.keys(updates).length) {
+            db.ref('words').update(updates).then(finish);
+        } else {
+            finish();
         }
     });
     db.ref('stats').once('value').then(snap => {
@@ -1160,6 +1195,7 @@ function renderWordList() {
 function toggleMemo(i) {
     words[i].memorized = !words[i].memorized;
     saveWords();
+    if (db && words[i].id) db.ref('words/' + words[i].id).update({ memorized: words[i].memorized });
     renderWordList();
     if (words[i].memorized) {
         if (Math.random() < 0.2) setTimeout(() => showGanadiPopup('happy', '진짜 외웠다고 생각하나?'), 400);
@@ -1168,8 +1204,9 @@ function toggleMemo(i) {
 
 function deleteWord(i) {
     if (confirm(`"${words[i].japanese}" 단어를 삭제할까요?`)) {
-        words.splice(i, 1);
+        const [removed] = words.splice(i, 1);
         saveWords();
+        if (db && removed.id) db.ref('words/' + removed.id).remove();
         renderWordList();
     }
 }
@@ -1182,7 +1219,10 @@ function addWord() {
     const fg = document.getElementById('input-furigana').value.trim();
     const kr = document.getElementById('input-korean').value.trim();
     if (!jp || !kr) { alert('일본어 단어와 한국어 뜻을 입력해주세요!'); return; }
-    words.push({ japanese: jp, furigana: fg, korean: kr, memorized: false, addedAt: Date.now() });
+    const w = { japanese: jp, furigana: fg, korean: kr, memorized: false, addedAt: Date.now() };
+    const key = db ? db.ref('words').push().key : 'local_' + Date.now() + Math.random().toString(36).slice(2);
+    if (db) db.ref('words/' + key).set(w);
+    words.push({ id: key, ...w });
     saveWords();
     ['input-japanese','input-furigana','input-korean'].forEach(id => document.getElementById(id).value = '');
 
@@ -1206,14 +1246,18 @@ function bulkAddWords() {
     const text = document.getElementById('input-bulk').value.trim();
     if (!text) return;
     let added = 0;
+    const addBulkWord = w => {
+        const key = db ? db.ref('words').push().key : 'local_' + Date.now() + Math.random().toString(36).slice(2);
+        if (db) db.ref('words/' + key).set(w);
+        words.push({ id: key, ...w });
+        added++;
+    };
     text.split('\n').forEach(line => {
         const parts = line.split(',').map(p => p.trim());
         if (parts.length === 3 && parts[0] && parts[2]) {
-            words.push({ japanese: parts[0], furigana: parts[1], korean: parts[2], memorized: false, addedAt: Date.now() });
-            added++;
+            addBulkWord({ japanese: parts[0], furigana: parts[1], korean: parts[2], memorized: false, addedAt: Date.now() });
         } else if (parts.length === 2 && parts[0] && parts[1]) {
-            words.push({ japanese: parts[0], furigana: '', korean: parts[1], memorized: false, addedAt: Date.now() });
-            added++;
+            addBulkWord({ japanese: parts[0], furigana: '', korean: parts[1], memorized: false, addedAt: Date.now() });
         }
     });
     saveWords();
